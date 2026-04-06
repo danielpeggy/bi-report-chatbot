@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenBI - ABC Restaurant Analytics</title>
+<script src="https://unpkg.com/amazon-quicksight-embedding-sdk@2/dist/quicksight-embedding-js-sdk.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#1a1a1a;color:#fff;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* Header */
+.header{background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:12px 24px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 20px rgba(37,99,235,.4);z-index:10;flex-shrink:0}
+.logo{width:48px;height:48px;background:#1e3a5f;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:24px;color:#60a5fa;border:2px solid #60a5fa;text-shadow:1px 1px 0 rgba(0,0,0,.3)}
+.header h1{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;text-shadow:2px 2px 4px rgba(0,0,0,.3);flex:1}
+.header-badge{background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.4);border-radius:8px;padding:4px 12px;font-size:11px;color:#60a5fa;font-weight:600;letter-spacing:1px}
+
+/* Dashboard tabs */
+.tab-bar{background:#242424;border-bottom:1px solid #333;display:flex;gap:0;flex-shrink:0;overflow-x:auto}
+.tab{padding:12px 24px;font-size:13px;font-weight:600;color:#888;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+.tab:hover{color:#ccc;background:#2a2a2a}
+.tab.active{color:#60a5fa;border-bottom-color:#2563eb;background:#2a2a2a}
+
+/* Main content area */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* QuickSight embed */
+.qs-container{flex:1;background:#1a1a1a;position:relative;min-height:0}
+#qsEmbed{width:100%;height:100%;position:absolute;inset:0}
+#qsEmbed iframe{width:100% !important;height:100% !important;border:none !important}
+.qs-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#1a1a1a;z-index:5}
+.qs-loading-text{color:#888;font-size:14px}
+
+/* Chat sidebar */
+.chat-sidebar{width:420px;background:#242424;border-left:1px solid #333;display:flex;flex-direction:column;flex-shrink:0;transition:width .3s}
+.chat-sidebar.collapsed{width:48px}
+.chat-sidebar.collapsed .chat-content{display:none}
+.chat-sidebar.collapsed .chat-header-bar{writing-mode:vertical-rl;text-orientation:mixed;padding:16px 8px;cursor:pointer;justify-content:flex-start}
+.chat-sidebar.collapsed .chat-header-bar h2{font-size:14px}
+.chat-sidebar.collapsed .chat-collapse-btn{transform:rotate(180deg)}
+
+.chat-header-bar{background:linear-gradient(135deg,#1e3a5f,#1e40af);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.chat-header-bar h2{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;flex:1}
+.chat-collapse-btn{background:none;border:none;color:#fff;cursor:pointer;font-size:16px;padding:4px;opacity:.8;transition:all .2s}
+.chat-collapse-btn:hover{opacity:1}
+
+.chat-content{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+
+.chat-msg{padding:12px 16px;border-radius:12px;font-size:13px;line-height:1.5;max-width:95%}
+.chat-msg.user{background:#2563eb;align-self:flex-end;color:#fff}
+.chat-msg.bot{background:#333;color:#ddd}
+.chat-msg b{color:#60a5fa;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.chat-msg pre{background:#1a1a1a;padding:8px 12px;border-radius:8px;overflow-x:auto;font-size:11px;margin:8px 0;white-space:pre-wrap;color:#4FC3F7}
+.chat-msg .lineage{background:#1a1a1a;padding:10px;border-radius:8px;margin-top:8px;font-size:12px;border-left:3px solid #60a5fa}
+.chat-msg table{border-collapse:collapse;width:100%;margin:8px 0;font-size:11px}
+.chat-msg th{background:#444;padding:6px 8px;text-align:right;font-weight:600;color:#60a5fa;border:1px solid #555}
+.chat-msg td{padding:6px 8px;text-align:right;border:1px solid #444}
+
+.chat-input-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid #444;flex-shrink:0}
+.chat-input-row input{flex:1;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:10px 14px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px}
+.chat-input-row input:focus{outline:none;border-color:#2563eb}
+.chat-input-row button{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;font-size:13px}
+.chat-input-row button:hover{background:#1d4ed8}
+.chat-input-row button:disabled{opacity:.5;cursor:not-allowed}
+
+/* Suggested questions */
+.suggestions{padding:8px 16px;display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid #333;flex-shrink:0}
+.suggestion{background:#333;color:#aaa;border:1px solid #444;border-radius:16px;padding:6px 12px;font-size:11px;cursor:pointer;transition:all .2s}
+.suggestion:hover{background:#2563eb;color:#fff;border-color:#2563eb}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">ABC</div>
+  <h1>ABC Restaurant Group - GenBI Analytics</h1>
+  <div class="header-badge">POWERED BY AMAZON BEDROCK</div>
+</div>
+
+<div class="tab-bar" id="tabBar">
+  <div class="tab active" data-dashboard="executive">Executive Summary</div>
+  <div class="tab" data-dashboard="sales">Sales & Menu</div>
+  <div class="tab" data-dashboard="operations">Operations</div>
+  <div class="tab" data-dashboard="customer">Customer Intelligence</div>
+  <div class="tab" data-dashboard="financial">Financial Performance</div>
+</div>
+
+<div class="main">
+  <div class="qs-container">
+    <div id="qsEmbed"></div>
+    <div class="qs-loading" id="qsLoading">
+      <div class="qs-loading-text" id="qsLoadingText">Loading dashboard...</div>
+    </div>
+  </div>
+
+  <div class="chat-sidebar" id="chatSidebar">
+    <div class="chat-header-bar">
+      <h2>GenBI Assistant</h2>
+      <button class="chat-collapse-btn" id="collapseBtn" title="Toggle chat panel">&#9654;</button>
+    </div>
+    <div class="chat-content">
+      <div class="suggestions" id="suggestions">
+        <div class="suggestion" data-q="What is the total revenue by region?">Revenue by region</div>
+        <div class="suggestion" data-q="Which menu items have the highest profit margin?">Top profit items</div>
+        <div class="suggestion" data-q="What is the average order value by store type?">AOV by store type</div>
+        <div class="suggestion" data-q="Show monthly revenue trend for 2023">Monthly trend</div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-msg bot">
+          <b>GenBI Assistant</b><br>
+          Ask me questions about sales, operations, customers, and financial data. I'll query the data warehouse and explain where the numbers come from.
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="Ask a business question..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button id="sendBtn" onclick="sendChat()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Safe DOM manipulation only - no innerHTML with user content */
+const API_BASE = 'http://localhost:5001';
+let currentDashboard = 'executive';
+let embeddingContext = null;
+
+/* --- QuickSight Embedding --- */
+async function loadDashboard(dashboardKey) {
+  const container = document.getElementById('qsEmbed');
+  const loading = document.getElementById('qsLoading');
+  const loadingText = document.getElementById('qsLoadingText');
+
+  while (container.firstChild) container.removeChild(container.firstChild);
+  loading.style.display = 'flex';
+  loadingText.textContent = 'Loading dashboard...';
+
+  try {
+    loadingText.textContent = 'Fetching embed URL...';
+    const res = await fetch(API_BASE + '/api/quicksight/embed-url?dashboard=' + dashboardKey);
+    const data = await res.json();
+
+    if (data.error) {
+      loadingText.textContent = 'API Error: ' + data.error;
+      return;
+    }
+
+    loadingText.textContent = 'Initializing QuickSight SDK...';
+
+    if (!embeddingContext) {
+      embeddingContext = await QuickSightEmbedding.createEmbeddingContext();
+    }
+
+    loadingText.textContent = 'Embedding dashboard...';
+
+    const frameOptions = {
+      url: data.embedUrl,
+      container: container,
+      height: '100%',
+      width: '100%',
+      resizeHeightOnSizeChangedEvent: false,
+      onChange: function(changeEvent) {
+        if (changeEvent.eventLevel === 'ERROR') {
+          loadingText.textContent = 'Embed error: ' + (changeEvent.message || JSON.stringify(changeEvent));
+          loading.style.display = 'flex';
+        }
+      },
+    };
+
+    await embeddingContext.embedDashboard(frameOptions);
+    loading.style.display = 'none';
+  } catch (e) {
+    loadingText.textContent = 'Error: ' + (e.message || 'Failed to load dashboard');
+  }
+}
+
+/* --- Tab Navigation --- */
+document.getElementById('tabBar').addEventListener('click', function(e) {
+  var tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  tab.classList.add('active');
+  currentDashboard = tab.dataset.dashboard;
+  loadDashboard(currentDashboard);
+  updateSuggestions(currentDashboard);
+});
+
+/* --- Chat Sidebar Toggle --- */
+document.getElementById('collapseBtn').addEventListener('click', function(e) {
+  e.stopPropagation();
+  document.getElementById('chatSidebar').classList.toggle('collapsed');
+});
+document.querySelector('.chat-header-bar').addEventListener('click', function() {
+  var sidebar = document.getElementById('chatSidebar');
+  if (sidebar.classList.contains('collapsed')) {
+    sidebar.classList.remove('collapsed');
+  }
+});
+
+/* --- Suggested Questions --- */
+var SUGGESTIONS = {
+  executive: [
+    {q: 'What is the total revenue by region?', label: 'Revenue by region'},
+    {q: 'What is the total number of orders for 2023?', label: 'Total orders'},
+    {q: 'Which quarter had the highest revenue?', label: 'Best quarter'},
+    {q: 'Show gross profit by store type', label: 'Profit by store type'},
+  ],
+  sales: [
+    {q: 'Which menu items have the highest revenue?', label: 'Top selling items'},
+    {q: 'What is the revenue breakdown by order channel?', label: 'Channel mix'},
+    {q: 'Which payment method is most popular?', label: 'Payment methods'},
+    {q: 'What are peak sales hours?', label: 'Peak hours'},
+  ],
+  operations: [
+    {q: 'What is the average labor cost per store by region?', label: 'Labor cost by region'},
+    {q: 'Which role handles the most orders?', label: 'Orders by role'},
+    {q: 'Show monthly labor cost trend', label: 'Labor trend'},
+    {q: 'What is the average hours worked per shift?', label: 'Avg shift hours'},
+  ],
+  customer: [
+    {q: 'What is the average customer rating by region?', label: 'Rating by region'},
+    {q: 'What percentage of customers would recommend?', label: 'Recommendation rate'},
+    {q: 'Show average sentiment score by quarter', label: 'Sentiment trend'},
+    {q: 'Which region has the highest food rating?', label: 'Best food rating'},
+  ],
+  financial: [
+    {q: 'What is the total EBITDA for 2023?', label: 'Total EBITDA'},
+    {q: 'Which region has the highest net margin percentage?', label: 'Best net margin'},
+    {q: 'Show monthly net profit trend', label: 'Profit trend'},
+    {q: 'What is the cost breakdown by category?', label: 'Cost breakdown'},
+  ],
+};
+
+function updateSuggestions(dashboard) {
+  var container = document.getElementById('suggestions');
+  while (container.firstChild) container.removeChild(container.firstChild);
+  (SUGGESTIONS[dashboard] || []).forEach(function(s) {
+    var el = document.createElement('div');
+    el.className = 'suggestion';
+    el.textContent = s.label;
+    el.dataset.q = s.q;
+    container.appendChild(el);
+  });
+}
+
+document.getElementById('suggestions').addEventListener('click', function(e) {
+  var s = e.target.closest('.suggestion');
+  if (!s) return;
+  document.getElementById('chatInput').value = s.dataset.q;
+  sendChat();
+});
+
+/* --- Chat Functions (safe DOM only) --- */
+function createEl(tag, className, text) {
+  var el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text) el.textContent = text;
+  return el;
+}
+
+function addUserMessage(text) {
+  var msgs = document.getElementById('chatMessages');
+  msgs.appendChild(createEl('div', 'chat-msg user', text));
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addBotMessage(content) {
+  var msgs = document.getElementById('chatMessages');
+  var div = createEl('div', 'chat-msg bot');
+  if (typeof content === 'string') { div.textContent = content; }
+  else { div.appendChild(content); }
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function formatNum(val) {
+  if (val === null || val === undefined) return 'NULL';
+  if (typeof val === 'number') return val >= 1000 ? val.toLocaleString('en-US', {maximumFractionDigits: 2}) : String(Number(val.toFixed(2)));
+  return String(val);
+}
+
+function buildResultTable(columns, rows) {
+  var table = document.createElement('table');
+  var thead = document.createElement('tr');
+  columns.forEach(function(col) { var th = document.createElement('th'); th.textContent = col; thead.appendChild(th); });
+  table.appendChild(thead);
+  rows.slice(0, 15).forEach(function(row) {
+    var tr = document.createElement('tr');
+    columns.forEach(function(col) { var td = document.createElement('td'); td.textContent = formatNum(row[col]); tr.appendChild(td); });
+    table.appendChild(tr);
+  });
+  return table;
+}
+
+function buildBotResponse(data) {
+  var frag = document.createDocumentFragment();
+  frag.appendChild(createEl('b', null, 'GenBI Assistant'));
+  frag.appendChild(document.createElement('br'));
+  frag.appendChild(createEl('span', null, '\u{1F4CA} ' + data.row_count + ' results'));
+  frag.appendChild(document.createElement('br'));
+
+  if (data.rows && data.rows.length > 0) {
+    frag.appendChild(buildResultTable(data.columns, data.rows));
+    if (data.rows.length > 15) {
+      var more = createEl('em', null, '... ' + (data.rows.length - 15) + ' more rows');
+      more.style.cssText = 'font-size:11px;color:#888';
+      frag.appendChild(more);
+    }
+  }
+  frag.appendChild(document.createElement('br'));
+
+  if (data.explanation) frag.appendChild(createEl('span', null, '\u{1F4DD} ' + data.explanation));
+
+  if (data.recommended_dashboard) {
+    var rec = createEl('div', 'lineage');
+    rec.style.borderLeftColor = '#22c55e';
+    rec.textContent = '\u{1F4CB} Recommended Dashboard: ' + data.recommended_dashboard;
+    rec.style.cursor = 'pointer';
+    rec.addEventListener('click', function() {
+      var mapping = {'Executive Summary':'executive','Sales & Menu':'sales','Operations':'operations','Customer Intelligence':'customer','Financial Performance':'financial'};
+      var key = null;
+      Object.keys(mapping).forEach(function(name) { if (data.recommended_dashboard.toLowerCase().indexOf(name.toLowerCase()) >= 0) key = mapping[name]; });
+      if (key) { var tab = document.querySelector('[data-dashboard="' + key + '"]'); if (tab) tab.click(); }
+    });
+    frag.appendChild(rec);
+  }
+
+  if (data.lineage) {
+    var lineage = createEl('div', 'lineage');
+    var lineageTitle = createEl('b', null, '\u{1F50D} Data Lineage:');
+    lineage.appendChild(lineageTitle);
+    lineage.appendChild(document.createElement('br'));
+    var lineageLines = data.lineage.split('\n');
+    lineageLines.forEach(function(line, idx) {
+      if (line.trim()) {
+        lineage.appendChild(document.createTextNode(line));
+      }
+      if (idx < lineageLines.length - 1) {
+        lineage.appendChild(document.createElement('br'));
+      }
+    });
+    lineage.style.whiteSpace = 'pre-wrap';
+    frag.appendChild(lineage);
+  }
+
+  if (data.sql) {
+    var toggle = createEl('span', null, 'Show SQL');
+    toggle.style.cssText = 'color:#60a5fa;cursor:pointer;font-size:11px;text-decoration:underline;margin-top:4px;display:inline-block';
+    var pre = createEl('pre', null, data.sql);
+    pre.style.display = 'none';
+    toggle.addEventListener('click', function() { pre.style.display = pre.style.display === 'none' ? 'block' : 'none'; });
+    frag.appendChild(toggle);
+    frag.appendChild(pre);
+  }
+  return frag;
+}
+
+function buildProgressEl() {
+  var wrap = document.createElement('div');
+  wrap.className = 'chat-msg bot';
+  var label = createEl('b', null, 'GenBI Assistant');
+  wrap.appendChild(label);
+  wrap.appendChild(document.createElement('br'));
+
+  var steps = [
+    {id: 'step1', text: 'Searching knowledge base'},
+    {id: 'step2', text: 'Generating SQL with Claude'},
+    {id: 'step3', text: 'Querying Redshift'}
+  ];
+  steps.forEach(function(s) {
+    var row = document.createElement('div');
+    row.id = s.id;
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:#666';
+    var icon = createEl('span', null, '\u25CB');
+    icon.style.cssText = 'font-size:14px;width:18px;text-align:center';
+    icon.className = 'step-icon';
+    row.appendChild(icon);
+    row.appendChild(createEl('span', null, s.text));
+    var timer = createEl('span', null, '');
+    timer.style.cssText = 'margin-left:auto;font-size:11px;color:#555;font-family:monospace';
+    timer.className = 'step-timer';
+    row.appendChild(timer);
+    wrap.appendChild(row);
+  });
+  return wrap;
+}
+
+function updateProgress(progressEl, step, done, elapsed) {
+  var row = progressEl.querySelector('#step' + step);
+  if (!row) return;
+  var icon = row.querySelector('.step-icon');
+  var timer = row.querySelector('.step-timer');
+  if (done) {
+    icon.textContent = '\u2705';
+    row.style.color = '#9ca3af';
+    if (elapsed != null) timer.textContent = elapsed + 's';
+  } else {
+    icon.textContent = '\u23F3';
+    row.style.color = '#60a5fa';
+  }
+}
+
+async function sendChat() {
+  var input = document.getElementById('chatInput');
+  var question = input.value.trim();
+  if (!question) return;
+
+  input.value = '';
+  addUserMessage(question);
+  var btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+
+  var msgs = document.getElementById('chatMessages');
+  var progressEl = buildProgressEl();
+  msgs.appendChild(progressEl);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    var res = await fetch(API_BASE + '/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({question: question})
+    });
+
+    var reader = res.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+    var finalData = null;
+
+    while (true) {
+      var chunk = await reader.read();
+      if (chunk.done) break;
+      buffer += decoder.decode(chunk.value, {stream: true});
+
+      var lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      lines.forEach(function(line) {
+        if (line.startsWith('data: ')) {
+          try {
+            var evt = JSON.parse(line.slice(6));
+            if (evt.type === 'status') {
+              updateProgress(progressEl, evt.step, evt.done, evt.elapsed);
+            } else if (evt.type === 'result') {
+              finalData = evt;
+            } else if (evt.type === 'error') {
+              finalData = {error: evt.error};
+            }
+          } catch(e) {}
+        }
+      });
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    progressEl.remove();
+    if (finalData && finalData.error) {
+      addBotMessage('Error: ' + finalData.error);
+    } else if (finalData) {
+      var resp = buildBotResponse(finalData);
+      if (finalData.timing) {
+        var timingEl = createEl('div', null, '\u23F1 ' + finalData.timing.total + 's (KB: ' + finalData.timing.kb_retrieval + 's | SQL Gen: ' + finalData.timing.sql_generation + 's | Query: ' + finalData.timing.query_execution + 's)');
+        timingEl.style.cssText = 'font-size:10px;color:#555;margin-top:6px;font-family:monospace';
+        var wrapper = document.createDocumentFragment();
+        wrapper.appendChild(resp);
+        wrapper.appendChild(timingEl);
+        addBotMessage(wrapper);
+      } else {
+        addBotMessage(resp);
+      }
+    } else {
+      addBotMessage('No response received.');
+    }
+  } catch (e) {
+    progressEl.remove();
+    addBotMessage('Connection error. Is the API server running?');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* --- Init --- */
+loadDashboard('executive');
+fetch(API_BASE + '/api/warmup', {method: 'POST'}).catch(function(){});
+</script>
+</body>
+</html>

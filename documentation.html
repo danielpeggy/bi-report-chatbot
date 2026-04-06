@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiro CLI — Building a Sales Dashboard from Screenshot to Production</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#242836;--border:#2e3345;--text:#e4e7ef;--muted:#8b92a8;--accent:#6c5ce7;--accent2:#00cec9;--red:#DA291C;--gold:#FFC72C;--green:#00b894}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:15px}
+.container{max-width:960px;margin:0 auto;padding:40px 24px 80px}
+.hero{text-align:center;padding:60px 0 40px;border-bottom:1px solid var(--border);margin-bottom:48px}
+.hero h1{font-size:38px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+.hero .subtitle{font-size:18px;color:var(--muted);max-width:640px;margin:0 auto}
+.badge{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;color:var(--accent);margin:16px 4px 0;letter-spacing:.5px}
+h2{font-size:26px;font-weight:700;margin:48px 0 16px;padding-top:24px;border-top:1px solid var(--border);color:var(--text)}
+h2 .num{color:var(--accent);margin-right:8px}
+h3{font-size:18px;font-weight:600;margin:28px 0 12px;color:var(--accent2)}
+p{margin-bottom:16px;color:var(--muted)}
+p strong{color:var(--text)}
+ul,ol{margin:0 0 16px 24px;color:var(--muted)}
+li{margin-bottom:8px}
+li strong{color:var(--text)}
+code{font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--surface2);padding:2px 6px;border-radius:4px;color:var(--accent2)}
+pre{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin:16px 0 24px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6;color:var(--text)}
+.callout{background:var(--surface);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:16px 20px;margin:20px 0}
+.callout.green{border-left-color:var(--green)}
+.callout.gold{border-left-color:var(--gold)}
+.callout p{margin:0;color:var(--text)}
+.step-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.step-card h4{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.step-card p{font-size:14px;margin:0}
+table{width:100%;border-collapse:collapse;margin:16px 0 24px;font-size:14px}
+th{background:var(--surface2);text-align:left;padding:10px 14px;font-weight:600;color:var(--text);border:1px solid var(--border)}
+td{padding:10px 14px;border:1px solid var(--border);color:var(--muted)}
+.file-tree{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:2;margin:16px 0 24px}
+.file-tree .dir{color:var(--accent)}
+.file-tree .file{color:var(--muted);padding-left:20px}
+.arch-flow{display:flex;align-items:center;justify-content:center;gap:12px;margin:24px 0;flex-wrap:wrap}
+.arch-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;text-align:center;font-size:13px;font-weight:600}
+.arch-box.highlight{border-color:var(--accent);color:var(--accent)}
+.arch-arrow{color:var(--muted);font-size:20px}
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin:24px 0}
+.toc h3{margin-top:0;color:var(--text)}
+.toc ol{margin-bottom:0}
+.toc a{color:var(--accent);text-decoration:none}
+.toc a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <h1>Building a Sales Dashboard with Kiro</h1>
+  <p class="subtitle">From a screenshot to a fully interactive, data-driven dashboard — powered by Amazon Redshift Serverless and Chart.js — in a single conversation.</p>
+  <span class="badge">KIRO CLI</span>
+  <span class="badge">REDSHIFT SERVERLESS</span>
+  <span class="badge">CHART.JS</span>
+  <span class="badge">DATA VISUALIZATION</span>
+</div>
+
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#overview">What is Kiro and Why It Matters</a></li>
+    <li><a href="#workflow">End-to-End Workflow</a></li>
+    <li><a href="#step1">Step 1 — Visual Requirement Analysis</a></li>
+    <li><a href="#step2">Step 2 — Database Schema Design</a></li>
+    <li><a href="#step3">Step 3 — Synthetic Data Generation</a></li>
+    <li><a href="#step4">Step 4 — Data Loading into Redshift</a></li>
+    <li><a href="#step5">Step 5 — Dashboard Implementation</a></li>
+    <li><a href="#step6">Step 6 — Interactive Filtering</a></li>
+    <li><a href="#bestpractices">Best Practices for Working with Kiro</a></li>
+    <li><a href="#alternatives">Alternative Frontend Libraries</a></li>
+    <li><a href="#deployment">Deployment Guide</a></li>
+    <li><a href="#files">Project Structure</a></li>
+  </ol>
+</div>
+
+<!-- Section 1 -->
+<h2 id="overview"><span class="num">01</span> What is Kiro and Why It Matters</h2>
+
+<p><strong>Kiro</strong> is an AI-powered development assistant that operates directly in your terminal. Unlike traditional chatbots, Kiro has deep integration with your local environment — it can read files, execute commands, interact with AWS services, analyze images, and write production-ready code.</p>
+
+<p>In this project, Kiro demonstrated its ability to:</p>
+<ul>
+  <li><strong>Understand business requirements from a screenshot</strong> — Kiro analyzed a dashboard image and extracted chart types, KPI values, data relationships, and layout structure</li>
+  <li><strong>Design a normalized database schema</strong> — Created dimension and fact tables following star-schema best practices for analytics</li>
+  <li><strong>Generate realistic synthetic data</strong> — Produced 6,569 orders and 14,646 line items with realistic distribution patterns (lunch/dinner peaks, weekend spikes, seasonal trends)</li>
+  <li><strong>Provision cloud infrastructure</strong> — Set up Redshift Serverless schema, managed IAM permissions, and loaded data via the AWS Data API</li>
+  <li><strong>Build a production-quality dashboard</strong> — Created an interactive HTML dashboard with 6 chart types, KPI cards, and hour-based filtering</li>
+</ul>
+
+<div class="callout green">
+  <p><strong>Key Value:</strong> The entire process — from screenshot analysis to working dashboard with live Redshift data — was completed in a single Kiro conversation, demonstrating how AI-assisted development can compress weeks of work into hours.</p>
+</div>
+
+<!-- Section 2 -->
+<h2 id="workflow"><span class="num">02</span> End-to-End Workflow</h2>
+
+<div class="arch-flow">
+  <div class="arch-box highlight">📸 Screenshot</div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-box">🧠 Kiro Analysis</div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-box">🗄️ Schema Design</div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-box">📊 Synthetic Data</div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-box highlight">☁️ Redshift Load</div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-box">📈 Dashboard</div>
+</div>
+
+<div class="step-grid">
+  <div class="step-card">
+    <h4>Phase 1: Understand</h4>
+    <p>Kiro reads the dashboard screenshot, identifies chart types (bar, line, doughnut, stacked bar), extracts KPI values, and maps data relationships.</p>
+  </div>
+  <div class="step-card">
+    <h4>Phase 2: Design</h4>
+    <p>Creates a star-schema datamart with categories, menu_items (dimensions) and orders, order_items (facts) in a dedicated Redshift schema.</p>
+  </div>
+  <div class="step-card">
+    <h4>Phase 3: Generate</h4>
+    <p>Produces synthetic data with realistic patterns — hour-weighted order distribution, day-of-week variance, seasonal dessert trends, and menu item popularity.</p>
+  </div>
+  <div class="step-card">
+    <h4>Phase 4: Deliver</h4>
+    <p>Builds an interactive Chart.js dashboard that mirrors the original screenshot, with dynamic hour-based filtering across all charts and KPIs.</p>
+  </div>
+</div>
+
+<!-- Section 3 -->
+<h2 id="step1"><span class="num">03</span> Step 1 — Visual Requirement Analysis</h2>
+
+<p>The process began with a single prompt: providing Kiro with a screenshot of the target dashboard and a description of the key features needed.</p>
+
+<h3>What Kiro Extracted from the Image</h3>
+<table>
+  <tr><th>Element</th><th>Detected</th><th>Implementation</th></tr>
+  <tr><td>Revenue by Category</td><td>Bar chart, 8 categories</td><td>Chart.js bar chart with brand red</td></tr>
+  <tr><td>Revenue Over Months</td><td>Stacked bar, 3 months × 8 categories</td><td>Chart.js stacked bar with 8-color palette</td></tr>
+  <tr><td>Top 5 Dishes</td><td>Bar chart, 5 items</td><td>Chart.js bar with multi-color bars</td></tr>
+  <tr><td>Order by Hours</td><td>Line chart, hours 10–23</td><td>Chart.js line with area fill</td></tr>
+  <tr><td>Revenue by Day</td><td>Line chart, Mon–Sun</td><td>Chart.js line with area fill</td></tr>
+  <tr><td>Order by Time Period</td><td>Pie/doughnut chart</td><td>Chart.js doughnut with 4 segments</td></tr>
+  <tr><td>KPI Cards</td><td>6 metric cards</td><td>CSS grid with gradient cards</td></tr>
+  <tr><td>Hour Filter</td><td>Hour selector bar</td><td>Interactive pill buttons with live filtering</td></tr>
+</table>
+
+<div class="callout">
+  <p><strong>Kiro Prompt Tip:</strong> When providing a screenshot, also describe the key business metrics you want to highlight. This helps Kiro prioritize which data patterns to generate in the synthetic data.</p>
+</div>
+
+<!-- Section 4 -->
+<h2 id="step2"><span class="num">04</span> Step 2 — Database Schema Design</h2>
+
+<p>Kiro designed a <strong>star schema</strong> optimized for analytical queries — the standard pattern for data warehouses and dashboards.</p>
+
+<h3>Entity Relationship</h3>
+<pre>
+┌──────────────┐     ┌──────────────────┐
+│  categories  │     │    menu_items     │
+│──────────────│     │──────────────────│
+│ category_id  │◄────│ category_id (FK)  │
+│ category_name│     │ item_id           │
+└──────────────┘     │ item_name         │
+                     │ unit_price        │
+                     └────────┬─────────┘
+                              │
+┌──────────────┐     ┌───────┴──────────┐
+│    orders    │     │   order_items     │
+│──────────────│     │──────────────────│
+│ order_id     │◄────│ order_id (FK)     │
+│ order_date   │     │ item_id (FK)      │
+│ order_hour   │     │ quantity          │
+│ order_day    │     │ line_total        │
+└──────────────┘     └──────────────────┘
+</pre>
+
+<h3>SQL Setup</h3>
+<pre>
+-- Run: sql/01_schema_and_dimensions.sql
+CREATE SCHEMA IF NOT EXISTS abc_hk;
+
+CREATE TABLE abc_hk.categories (
+  category_id   INT PRIMARY KEY,
+  category_name VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE abc_hk.menu_items (
+  item_id     INT PRIMARY KEY,
+  item_name   VARCHAR(100) NOT NULL,
+  category_id INT NOT NULL,
+  unit_price  DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE abc_hk.orders (
+  order_id          INT PRIMARY KEY,
+  order_date        DATE NOT NULL,
+  order_hour        INT NOT NULL,
+  order_day_of_week VARCHAR(10) NOT NULL
+);
+
+CREATE TABLE abc_hk.order_items (
+  order_item_id INT PRIMARY KEY,
+  order_id      INT NOT NULL,
+  item_id       INT NOT NULL,
+  quantity      INT NOT NULL,
+  line_total    DECIMAL(10,2) NOT NULL
+);
+</pre>
+
+<!-- Section 5 -->
+<h2 id="step3"><span class="num">05</span> Step 3 — Synthetic Data Generation</h2>
+
+<p>Kiro generated realistic data matching the dashboard's visual patterns:</p>
+
+<table>
+  <tr><th>Pattern</th><th>Implementation</th></tr>
+  <tr><td>Lunch peak (12–14h)</td><td>8× weight multiplier for order generation</td></tr>
+  <tr><td>Dinner peak (18–20h)</td><td>7× weight multiplier</td></tr>
+  <tr><td>Weekend spike</td><td>1.3–1.4× day multiplier for Fri–Sun</td></tr>
+  <tr><td>Seasonal desserts</td><td>Ice cream weights 2–3× higher in March</td></tr>
+  <tr><td>Breakfast hours only</td><td>Breakfast items disabled after 11am</td></tr>
+  <tr><td>~2.27 items/order</td><td>Weighted random: 15% 1-item, 45% 2-item, 30% 3-item, 10% 4-item</td></tr>
+  <tr><td>Menu popularity</td><td>Big Mac, Fries, Soft Drinks weighted highest</td></tr>
+</table>
+
+<h3>Generated Data Summary</h3>
+<pre>
+Total Orders:       6,569
+Total Line Items:   14,646
+Total Revenue:      HK$ 67,303.00
+Avg Items/Order:    2.23
+Avg Sales/Order:    HK$ 10.25
+Date Range:         Jan 1 – Mar 31, 2023
+</pre>
+
+<p>Run the generator: <code>python3 generate_data.py</code></p>
+
+<!-- Section 6 -->
+<h2 id="step4"><span class="num">06</span> Step 4 — Data Loading into Redshift</h2>
+
+<p>Kiro used the <strong>AWS Redshift Data API</strong> to load data securely — no direct database credentials needed.</p>
+
+<h3>Security Approach</h3>
+<ol>
+  <li><strong>Managed admin password</strong> — Stored in AWS Secrets Manager, never exposed in code</li>
+  <li><strong>IAM authentication</strong> — Redshift Data API uses IAM roles, not database passwords</li>
+  <li><strong>Least privilege</strong> — IAM user granted only CREATE on the specific database</li>
+  <li><strong>Dedicated schema</strong> — <code>abc_hk</code> schema isolates dashboard data from other workloads</li>
+</ol>
+
+<h3>Loading Commands</h3>
+<pre>
+# 1. Grant permissions (one-time, via admin)
+aws redshift-data execute-statement \
+  --database dev \
+  --workgroup-name demo-sales-related \
+  --secret-arn "arn:aws:secretsmanager:us-east-1:ACCOUNT:secret:redshift!..." \
+  --sql "GRANT CREATE ON DATABASE dev TO \"IAM:username\";" \
+  --region us-east-1
+
+# 2. Create schema and tables
+aws redshift-data execute-statement \
+  --database dev \
+  --workgroup-name demo-sales-related \
+  --sql "$(cat sql/01_schema_and_dimensions.sql)" \
+  --region us-east-1
+
+# 3. Load order data (batch inserts)
+aws redshift-data execute-statement \
+  --database dev \
+  --workgroup-name demo-sales-related \
+  --sql "$(cat sql/02_orders_data.sql)" \
+  --region us-east-1
+</pre>
+
+<!-- Section 7 -->
+<h2 id="step5"><span class="num">07</span> Step 5 — Dashboard Implementation</h2>
+
+<p>The dashboard uses <strong>Chart.js 4.x</strong>, the most popular open-source charting library with 60K+ GitHub stars, chosen for its simplicity, rich chart types, and zero-dependency architecture.</p>
+
+<h3>Architecture</h3>
+<pre>
+index.html          — Layout, CSS, structure
+app.js              — Data (from Redshift), chart rendering, interactivity
+Chart.js (CDN)      — Charting engine
+Google Fonts (CDN)  — Bebas Neue + DM Sans typography
+</pre>
+
+<h3>Chart Types Used</h3>
+<table>
+  <tr><th>Chart</th><th>Type</th><th>Chart.js Config</th></tr>
+  <tr><td>Revenue by Category</td><td>Bar</td><td><code>type: 'bar'</code></td></tr>
+  <tr><td>Revenue Over Months</td><td>Stacked Bar</td><td><code>type: 'bar'</code> + <code>stacked: true</code></td></tr>
+  <tr><td>Top 5 Dishes</td><td>Bar (multi-color)</td><td><code>type: 'bar'</code> + color array</td></tr>
+  <tr><td>Orders by Hour</td><td>Area Line</td><td><code>type: 'line'</code> + <code>fill: true</code></td></tr>
+  <tr><td>Revenue by Day</td><td>Area Line</td><td><code>type: 'line'</code> + <code>fill: true</code></td></tr>
+  <tr><td>Orders by Period</td><td>Doughnut</td><td><code>type: 'doughnut'</code></td></tr>
+</table>
+
+<!-- Section 8 -->
+<h2 id="step6"><span class="num">08</span> Step 6 — Interactive Filtering</h2>
+
+<p>The hour filter dynamically updates <strong>all 6 charts and all KPI cards</strong> simultaneously. Kiro queried Redshift for per-hour breakdowns across every dimension, then embedded the aggregated data in the dashboard.</p>
+
+<h3>How It Works</h3>
+<ol>
+  <li>User clicks an hour pill (e.g., "12") or "All"</li>
+  <li><code>getData(hour)</code> aggregates the pre-computed hourly data for the selected hour(s)</li>
+  <li>All 6 Chart.js instances are destroyed and recreated with filtered data</li>
+  <li>KPI cards recalculate totals, averages, and counts</li>
+</ol>
+
+<pre>
+// Filtering logic (simplified)
+function getData(hour) {
+  const hrs = hour === 'all' ? ALL_HOURS : [parseInt(hour)];
+  const catData = mergeObjects(hrs.map(h => hourlyRevByCat[h]));
+  const kpis = sumAcrossHours(hrs);
+  return { catData, kpis, ... };
+}
+</pre>
+
+<!-- Section 9 -->
+<h2 id="bestpractices"><span class="num">09</span> Best Practices for Working with Kiro</h2>
+
+<h3>1. Provide Visual References</h3>
+<p>Screenshots are worth a thousand words. Kiro can analyze images to extract layout, chart types, color schemes, and data patterns. Always provide a reference image when building dashboards.</p>
+
+<h3>2. Describe Business Context</h3>
+<p>Don't just say "build a dashboard." Describe the KPIs, the audience, and the business questions. For example: <em>"Highlight peak lunch hours to optimize staffing"</em> gives Kiro context to weight data generation appropriately.</p>
+
+<h3>3. Iterate in Phases</h3>
+<p>Break complex projects into phases: schema → data → dashboard → interactivity. This lets you validate each step before moving on.</p>
+
+<h3>4. Let Kiro Handle Infrastructure</h3>
+<p>Kiro can directly interact with AWS services — creating schemas, managing permissions, loading data. This eliminates context-switching between your IDE and the AWS console.</p>
+
+<h3>5. Review Security at Each Step</h3>
+<p>Ask Kiro about security implications. In this project, Kiro used Secrets Manager for admin credentials, IAM authentication for the Data API, and dedicated schemas for isolation.</p>
+
+<h3>6. Request Documentation</h3>
+<p>Ask Kiro to package deliverables with documentation. This ensures the solution is reproducible and transferable to other teams.</p>
+
+<!-- Section 10 -->
+<h2 id="alternatives"><span class="num">10</span> Alternative Frontend Libraries</h2>
+
+<p>Chart.js was chosen for this demo for its simplicity. Here are other popular options that can enrich the presentation:</p>
+
+<table>
+  <tr><th>Library</th><th>GitHub Stars</th><th>Best For</th><th>Key Advantage</th></tr>
+  <tr><td><strong>Apache ECharts</strong></td><td>62K+</td><td>Complex dashboards, large datasets</td><td>GPU-accelerated rendering, 3D charts, rich interactions, built-in themes. Excellent for enterprise dashboards with millions of data points.</td></tr>
+  <tr><td><strong>D3.js</strong></td><td>109K+</td><td>Custom, bespoke visualizations</td><td>Maximum flexibility — build any visualization imaginable. Steep learning curve but unmatched power for custom charts.</td></tr>
+  <tr><td><strong>Recharts</strong></td><td>24K+</td><td>React applications</td><td>Declarative React components. Perfect if the dashboard is part of a React app. Composable and easy to customize.</td></tr>
+  <tr><td><strong>Plotly.js</strong></td><td>17K+</td><td>Scientific/analytical dashboards</td><td>Built on D3, supports 40+ chart types including 3D, statistical, and geographic. Great for data science teams.</td></tr>
+  <tr><td><strong>Highcharts</strong></td><td>12K+</td><td>Enterprise, commercial use</td><td>Polished out-of-the-box, excellent accessibility, export to PDF/PNG. Commercial license required for business use.</td></tr>
+  <tr><td><strong>AG Charts</strong></td><td>Part of AG Grid</td><td>Data-heavy enterprise apps</td><td>Tight integration with AG Grid for table+chart combos. Enterprise-grade with financial chart types.</td></tr>
+  <tr><td><strong>Nivo</strong></td><td>13K+</td><td>React, design-focused</td><td>Beautiful defaults, motion/animation built-in, server-side rendering support. Great for design-conscious teams.</td></tr>
+  <tr><td><strong>Tremor</strong></td><td>16K+</td><td>React dashboard components</td><td>Full dashboard component library (not just charts). Includes KPI cards, tables, and layouts. Built on Tailwind CSS.</td></tr>
+</table>
+
+<div class="callout gold">
+  <p><strong>Recommendation:</strong> For a production deployment, consider <strong>Apache ECharts</strong> for its enterprise-grade performance and built-in theming, or <strong>Tremor</strong> if building with React for its complete dashboard component system including KPI cards, tables, and filter components out of the box.</p>
+</div>
+
+<!-- Section 11 -->
+<h2 id="deployment"><span class="num">11</span> Deployment Guide</h2>
+
+<h3>Option A: S3 + CloudFront (Recommended)</h3>
+<p>Cheapest and most scalable. Ideal for static dashboards with embedded data.</p>
+<pre>
+# 1. Create S3 bucket
+aws s3 mb s3://abc-hk-dashboard-prod --region us-east-1
+
+# 2. Upload dashboard files
+aws s3 sync ./abc-hk-dashboard s3://abc-hk-dashboard-prod/ \
+  --exclude "*.py" --exclude "sql/*" --exclude "*.md"
+
+# 3. Create CloudFront distribution
+aws cloudfront create-distribution \
+  --origin-domain-name abc-hk-dashboard-prod.s3.amazonaws.com \
+  --default-root-object index.html
+</pre>
+
+<h3>Option B: Amplify Hosting</h3>
+<p>One-click deployment with CI/CD built in.</p>
+<pre>
+# Connect to Git repo and deploy
+aws amplify create-app --name abc-hk-dashboard
+aws amplify create-branch --app-id APP_ID --branch-name main
+</pre>
+
+<h3>Option C: Live Data with Lambda + API Gateway</h3>
+<p>For real-time dashboards that query Redshift on each page load.</p>
+<pre>
+User Browser → CloudFront → API Gateway → Lambda → Redshift Data API → Redshift
+</pre>
+
+<!-- Section 12 -->
+<h2 id="files"><span class="num">12</span> Project Structure</h2>
+
+<div class="file-tree">
+<span class="dir">abc-hk-dashboard/</span><br>
+<span class="file">├── index.html              — Dashboard layout and styles</span><br>
+<span class="file">├── app.js                  — Chart rendering, data, interactivity</span><br>
+<span class="file">├── generate_data.py        — Synthetic data generator</span><br>
+<span class="file">├── documentation.html      — This file</span><br>
+<span class="dir">├── sql/</span><br>
+<span class="file">│   ├── 01_schema_and_dimensions.sql  — Schema + dimension data</span><br>
+<span class="file">│   ├── 02_orders_data.sql            — Generated order inserts</span><br>
+<span class="file">│   ├── 03_order_items_data.sql        — Generated line item inserts</span><br>
+<span class="file">│   └── 04_dashboard_queries.sql       — Aggregation queries</span><br>
+</div>
+
+<h3>Quick Start</h3>
+<pre>
+# 1. Generate synthetic data
+python3 generate_data.py
+
+# 2. Run SQL scripts against Redshift (in order)
+#    01 → Schema + dimensions
+#    02 → Orders
+#    03 → Order items
+
+# 3. Open dashboard
+open index.html
+</pre>
+
+<div class="callout green">
+  <p><strong>Built with Kiro CLI</strong> — This entire project was created through a conversational workflow with Kiro, demonstrating how AI-assisted development can accelerate dashboard delivery from concept to production.</p>
+</div>
+
+</div>
+</body>
+</html>

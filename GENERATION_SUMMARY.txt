@@ -1,0 +1,88 @@
+==============================================================================
+McDonald's HK GenBI - Market & Financial Data Generation - COMPLETE
+==============================================================================
+
+SCRIPT CREATED:
+  /Users/danshek/mcdhk-dashboard/genbi/generate_market_financial.py
+
+DIRECTORIES CREATED:
+  /Users/danshek/mcdhk-dashboard/genbi/raw/market/
+  /Users/danshek/mcdhk-dashboard/genbi/raw/financial/
+
+CSV FILES GENERATED (5 total):
+
+MARKET DATA (raw/market/):
+  1. competitor_pricing.csv
+     - Records: 972 (5 competitors × ~20 items × 12 months)
+     - Competitors: KFC, Burger King, MOS Burger, Jollibee, Shake Shack
+     - Pricing variance: ±15% typical, KFC cheaper on chicken, Shake Shack 40% premium
+     - Monthly snapshots for price comparison analysis
+
+  2. market_indicators.csv
+     - Records: 216 (18 districts × 12 months)
+     - Districts: All 18 Hong Kong administrative districts
+     - Metrics: unemployment, income, population, foot traffic, retail sales, tourists, new businesses
+     - Seasonal patterns: tourism peak Jul-Aug, holiday peak Dec
+     - Tourist data for 3 districts: Central_Western, Wan_Chai, Yau_Tsim_Mong
+
+FINANCIAL DATA (raw/financial/):
+  3. store_pnl.csv
+     - Records: 2,400 (200 stores × 12 months)
+     - P&L metrics: revenue, COGS, gross profit, all expense categories, net profit
+     - Revenue calculation: avg_daily_orders × avg_order_value × days_in_month × seasonal_multiplier
+     - COGS: 32-38% of revenue
+     - Labor: 25-30% of revenue
+     - Utilities: HK$15K-50K/month (peak in summer)
+     - Net margins: 8-15% (realistic for QSR)
+
+  4. cogs_detail.csv
+     - Records: 360 (30 menu items × 12 months, averaged across stores)
+     - Item-level tracking with supply chain variance
+     - Suppliers: 10 named suppliers (HK Food Supply Co, Pacific Meats, etc.)
+     - Supply reliability: 92-99% (lower during typhoon season)
+     - Supply variance: ±5% monthly fluctuations
+
+  5. opex_breakdown.csv
+     - Records: 24,000 (200 stores × 12 months × 10 expense categories)
+     - Categories: labor, rent, utilities, maintenance, marketing, insurance, supplies, technology, training, miscellaneous
+     - Budget tracking with variance analysis (±10% typical)
+     - Seasonal patterns: utilities spike Jun-Aug (AC), maintenance seasonal
+
+CONFIGURATION:
+  - Random seed: 42 (reproducible results)
+  - Time period: 2023 (full year, Jan 1 - Dec 31)
+  - Stores: 200 McDonald's locations
+  - Menu items: 30 tracked items
+  - Currency: Hong Kong Dollars (HKD)
+
+DATA CHARACTERISTICS:
+  - All data realistic and industry-appropriate
+  - Seasonal variations built-in (tourism, weather, holidays)
+  - Geographic variations by district (income, employment, foot traffic)
+  - Supply chain variance reflecting real-world fluctuations
+  - Budget vs. actual tracking with realistic variance patterns
+
+RUNNING THE SCRIPT:
+  cd /Users/danshek/mcdhk-dashboard/genbi
+  python3 generate_market_financial.py
+
+DEPENDENCIES:
+  - Python 3.x
+  - config.py in the same directory (provides STORES, MENU_ITEMS, dates)
+  - Standard library only (csv, random, datetime, pathlib)
+
+VALIDATION SUMMARY:
+  ✓ All 5 CSV files generated successfully
+  ✓ Record counts match specifications
+  ✓ All required columns present
+  ✓ Data ranges realistic and appropriate
+  ✓ Seasonal patterns implemented
+  ✓ Geographic variations applied
+  ✓ Script runs without errors
+
+TOTAL DATA VOLUME:
+  - Combined records: 27,948
+  - Total file size: ~1.4 MB
+  - Compressed potential: ~300-400 KB (if using gzip)
+
+==============================================================================

@@ -1,0 +1,174 @@
+==============================================================================
+McDonald's HK GenBI - Generated Data Samples & Specification
+==============================================================================
+
+1. COMPETITOR PRICING DATA
+   File: raw/market/competitor_pricing.csv (972 rows)
+   
+   Sample Row:
+   2023-01-01,KFC,Menu Item 21,32.83,35.66,−2.84,1.086
+   
+   Columns:
+   - snapshot_date: Monthly snapshot (1st of each month, 12 snapshots)
+   - competitor_name: KFC, Burger King, MOS Burger, Jollibee, Shake Shack
+   - item_equivalent: Menu item being compared (from config MENU_ITEMS)
+   - competitor_price_hkd: Price charged by competitor
+   - mcdonalds_price_hkd: McDonald's price for same/similar item
+   - price_difference: Raw difference in HKD
+   - price_index: Ratio (McDonald's price / competitor price)
+   
+   Business Logic:
+   - KFC typically 8% cheaper (price_multiplier: 0.92)
+   - Burger King ~5% more expensive (1.05)
+   - MOS Burger ~8% premium (1.08)
+   - Jollibee 12% cheaper (0.88)
+   - Shake Shack 40% premium (1.40)
+   - Each item has ±5% random variance
+
+   Use Case: Competitive positioning analysis, pricing strategy optimization
+
+
+2. MARKET INDICATORS DATA
+   File: raw/market/market_indicators.csv (216 rows)
+   
+   Sample Row:
+   2023-01-01,Central_Western,3.0,42131.0,243000,109.7,111.7,49965,21
+   
+   Columns:
+   - month: YYYY-MM-01 format
+   - district: One of 18 HK districts
+   - unemployment_rate_pct: 3-5% (lower in Central, higher in NT)
+   - median_household_income_hkd: HK$25K-45K by district
+   - population: District population
+   - foot_traffic_index: 100 baseline, 110-130 in peak seasons (Jul-Aug, Dec)
+   - retail_sales_index: 100 baseline, spikes in Nov-Dec (holiday shopping)
+   - tourist_arrivals: Only for tourist districts (Central, TST, Wan Chai)
+   - new_businesses_opened: Economic vitality indicator
+   
+   Seasonal Patterns:
+   - Jul-Aug: Tourists, summer holidays (foot traffic 110-130)
+   - Dec: Holiday shopping, winter tourists (retail sales 120-140)
+   - Typhoon season (Sep): Supply chain stress reflected in data
+   
+   Use Case: Market demand forecasting, location-based strategy, consumer insights
+
+
+3. STORE P&L DATA
+   File: raw/financial/store_pnl.csv (2,400 rows)
+   
+   Sample Row:
+   2023-01-01,S001,752136.51,278572.14,473564.37,206903.69,159649,29264.85,22586.09,15887.65,39273.1,13943.04,25330.05,62.96,3.37
+   
+   Columns:
+   - month: YYYY-MM-01
+   - store_id: S001 to S200
+   - revenue: Monthly sales revenue
+   - cogs: Cost of goods sold (32-38% of revenue)
+   - gross_profit: Revenue - COGS
+   - labor_cost: Payroll + benefits (25-30% of revenue, 26-28% for mall stores)
+   - rent: From store config (fixed per store)
+   - utilities: HK$15K-30K normally, HK$35K-50K Jun-Aug (AC peak)
+   - marketing_allocation: 3-5% of revenue
+   - other_opex: Miscellaneous operating expenses
+   - ebitda: Operating profit
+   - depreciation: Equipment depreciation (~HK$8K-15K)
+   - net_profit: Bottom line
+   - gross_margin_pct: (Gross profit / revenue) × 100, ~60-68%
+   - net_margin_pct: (Net profit / revenue) × 100, ~8-15%
+   
+   Revenue Drivers:
+   - Base: store's avg_daily_orders × HK$55 avg_order_value × days_in_month
+   - Seasonal multiplier: 1.08-1.15 (Jul-Aug, Dec), 0.95-1.05 (regular months)
+   - Random variance: ±5% monthly fluctuation
+   
+   Use Case: Financial analysis, store profitability tracking, budget vs. actual
+
+
+4. COGS DETAIL DATA
+   File: raw/financial/cogs_detail.csv (360 rows)
+   
+   Sample Row:
+   2023-01-01,M001,Menu Item 1,beverage,32.2,27.09,118.87,Premium Dairy Solutions,97.2
+   
+   Columns:
+   - month: YYYY-MM-01
+   - item_id: M001 to M030
+   - item_name: From config (Menu Item 1, etc.)
+   - category_id: Category from config (beverage, main, dessert, etc.)
+   - avg_unit_cogs: Average cost per unit (supply variance)
+   - avg_unit_price: Standard selling price
+   - food_cost_pct: (COGS / Price) × 100
+   - supplier_name: 10 different suppliers rotating
+   - supply_reliability_pct: 92-99% (lower in typhoon season Jul-Sep)
+   
+   Supply Chain Variance:
+   - Normal months: ±3-5% COGS variance
+   - Typhoon season (Jul-Sep): Wider variance, reliability 92-96%
+   - Other months: Tight variance, reliability 95-99%
+   
+   Use Case: Menu costing, supplier performance tracking, supply chain analytics
+
+
+5. OPEX BREAKDOWN DATA
+   File: raw/financial/opex_breakdown.csv (24,000 rows)
+   
+   Sample Row:
+   2023-01-01,S001,labor,194438.26,179556.8,8.29
+   
+   Columns:
+   - month: YYYY-MM-01
+   - store_id: S001 to S200
+   - expense_category: One of 10 categories
+   - amount_hkd: Actual expense incurred
+   - budget_hkd: Budgeted expense
+   - variance_pct: ((Actual - Budget) / Budget) × 100
+   
+   Expense Categories & Typical Amounts:
+   - labor: HK$120K-200K/month (largest category)
+   - rent: From store config (fixed)
+   - utilities: HK$15K-50K (higher Jun-Aug for AC)
+   - maintenance: HK$10K-25K (some seasonal spikes)
+   - marketing: HK$20K-40K
+   - insurance: HK$15K-25K (relatively fixed)
+   - supplies: HK$25K-50K (packaging, cleaning, etc.)
+   - technology: HK$5K-15K (POS, systems)
+   - training: HK$3K-12K
+   - miscellaneous: HK$8K-20K
+   
+   Budget Variance:
+   - Typical: ±10% variance (realistic operational reality)
+   - Most stores within budget ±10%
+   - Some outliers naturally occurring
+   
+   Use Case: Budget management, expense control, variance analysis
+
+==============================================================================
+DATA GENERATION LOGIC SUMMARY
+==============================================================================
+
+REPRODUCIBILITY:
+  - Random seed: 42
+  - Identical output if regenerated with same seed
+  - Useful for testing, development, demonstrations
+
+REALISM FACTORS:
+  1. Seasonal variation (summer tourism, winter holidays, typhoon season)
+  2. Geographic variation (income, employment by district)
+  3. Supply chain volatility (±5% variance, typhoon impacts)
+  4. Budget variance (±10% realistic)
+  5. Store type differences (mall stores higher labor costs due to rent)
+  6. Competitor dynamics (realistic pricing relative to McDonald's)
+
+GEOGRAPHIC COVERAGE:
+  - 18 HK districts with accurate population/economics
+  - Tourist districts tracked separately
+  - North-South income disparity modeled
+  - Regional retail activity variations
+
+TIME COVERAGE:
+  - Full year 2023 (Jan 1 - Dec 31)
+  - 12 monthly snapshots
+  - Leap year not applicable (2023 is not leap year)
+  - All holidays & seasons included in variance
+
+==============================================================================

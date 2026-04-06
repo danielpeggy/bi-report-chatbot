@@ -1,0 +1,167 @@
+================================================================================
+McDonald's HK GenBI - Operations Data Generation COMPLETE
+================================================================================
+
+Generated: 2026-03-30
+Data Period: 2023-01-01 to 2023-12-31 (365 days)
+Random Seed: 42 (reproducible)
+
+================================================================================
+FILES CREATED
+================================================================================
+
+Main Script Files:
+  /Users/danshek/mcdhk-dashboard/genbi/config.py
+  /Users/danshek/mcdhk-dashboard/genbi/generate_operations.py
+
+Documentation:
+  /Users/danshek/mcdhk-dashboard/genbi/README_OPERATIONS_GENERATION.md
+  /Users/danshek/mcdhk-dashboard/genbi/DATA_GENERATION_SUMMARY.md
+
+Generated Data (in raw/operations/):
+  1. inventory_daily.csv (2,190,000 rows, 85 MB)
+  2. labor_schedules.csv (665,600 rows, 47 MB)
+  3. service_times.csv (1,752,000 rows, 81 MB)
+  4. equipment_logs.csv (10,054 rows, 1 MB)
+
+Total Data Size: 240 MB
+
+================================================================================
+DATA SUMMARY
+================================================================================
+
+INVENTORY DAILY (2.19M rows)
+  - 200 stores x 30 menu items x 365 days
+  - Opening stock carried forward daily
+  - Replenishment when stock < 30 units
+  - Waste: 1-8% depending on category
+  - Waste reasons: expired, damaged, overproduction
+
+LABOR SCHEDULES (665.6K rows)
+  - 15-25 employees per store
+  - 7-12 shifts per store per day
+  - Roles: crew (70%), shift_manager (20%), store_manager (10%)
+  - Hourly rates: crew HK$60-75, manager HK$85-110, store_mgr HK$130-160
+  - Includes scheduled vs actual hours (overtime on weekends)
+  - Orders handled per shift
+
+SERVICE TIMES (1.75M rows)
+  - Hourly aggregates: 200 stores x 24 hours x 365 days
+  - Counter wait: 120-300 sec avg (1.5-2x during peaks)
+  - Kiosk wait: 60-180 sec avg
+  - Drive-thru wait: 180-400 sec (drive_thru stores only)
+  - Delivery prep: 300-600 sec
+  - Staff on duty: 3-8 (higher during peak hours 12-13, 18-19)
+
+EQUIPMENT LOGS (10.054K rows)
+  - 7 equipment types: grill, fryer, ice_cream_machine, drink_dispenser, pos_terminal, hvac, walk_in_cooler
+  - 4 event types: breakdown, preventive_maintenance, repair, inspection
+  - Quarterly preventive maintenance for all equipment
+  - 1-3 random breakdowns per store per month
+  - Ice cream machines break down frequently (meme-accurate!)
+  - Repair costs: HK$0-15,000
+
+================================================================================
+TEMPORAL PATTERNS
+================================================================================
+
+Hour Weights:
+  - Peak lunch: 12-13 (2.0x volume)
+  - Peak dinner: 18-19 (1.7-1.9x volume)
+  - Night shift: 22-6 (0.05-0.3x volume)
+
+Day Weights:
+  - Weekday: 0.8-0.9x
+  - Weekend (Sat-Sun): 1.3-1.4x
+
+Month Weights:
+  - Low: Jan-Feb (0.8x)
+  - Peak: Jul-Aug, Dec (1.1-1.2x)
+
+================================================================================
+STORE NETWORK
+================================================================================
+
+200 Stores across Hong Kong:
+  - Hong Kong Island: 50 stores
+  - Kowloon: 80 stores
+  - New Territories: 70 stores
+
+Store Types: standard, express, drive_thru, kiosk
+Average Daily Orders: 400-1,200 per store
+Monthly Rent: HK$50K-300K
+
+Regions Include:
+  Central, Wan Chai, Causeway Bay, Tsim Sha Tsui, Mong Kok,
+  Sha Tin, Yuen Long, Tuen Mun, and many more
+
+================================================================================
+DATA QUALITY
+================================================================================
+
+Validation Status: PASSED
+
+Stock formula verified (2,190,000 rows)
+All dates within 2023-01-01 to 2023-12-31
+200 stores x 30 items confirmed
+Labor costs calculated correctly
+Ice cream breakdowns higher (realistic)
+No null values in required fields
+Temporal relationships maintained
+Waste reasons only when wasted > 0
+
+================================================================================
+HOW TO USE
+================================================================================
+
+1. Run the generator:
+   cd /Users/danshek/mcdhk-dashboard/genbi
+   python generate_operations.py
+
+2. Load data:
+   - Import CSVs into PostgreSQL, BigQuery, or data warehouse
+   - Use store_id as foreign key
+   - Join with master data (store master, employee master)
+
+3. Create analysis:
+   - Inventory turnover by store/category
+   - Labor cost per order
+   - Customer experience trends
+   - Equipment maintenance ROI
+
+4. Build dashboards:
+   - Connect to Tableau, PowerBI, or equivalent
+   - Use GenBI analysis layer for insights
+
+================================================================================
+FILES LOCATION
+================================================================================
+
+/Users/danshek/mcdhk-dashboard/genbi/
+├── config.py                          (51 KB)
+├── generate_operations.py             (18 KB)
+├── README_OPERATIONS_GENERATION.md
+├── DATA_GENERATION_SUMMARY.md
+└── raw/operations/
+    ├── inventory_daily.csv            (85 MB)
+    ├── labor_schedules.csv            (47 MB)
+    ├── service_times.csv              (81 MB)
+    └── equipment_logs.csv             (1 MB)
+
+================================================================================
+NOTES
+================================================================================
+
+- Random seed (42) ensures reproducible generation
+- Processing optimized by month for memory efficiency
+- All monetary values in HK$ (Hong Kong Dollars)
+- All times in 24-hour format
+- CSV format for easy import into any data warehouse
+- Data is completely synthetic (no real business data)
+- Realistic patterns baked in (seasonality, peaks, waste patterns)
+
+For more details, see:
+  - README_OPERATIONS_GENERATION.md (usage guide)
+  - DATA_GENERATION_SUMMARY.md (detailed statistics)
+
+================================================================================
