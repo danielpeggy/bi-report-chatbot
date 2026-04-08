@@ -111,7 +111,7 @@ flowchart LR
     end
 
     subgraph AWS["AWS Cloud"]
-        CF["CloudFront<br/><small>d1k3nghlesd8gk.cloudfront.net</small>"]
+        CF["CloudFront<br/><small>CDN + HTTPS</small>"]
         S3W["S3 Static Website<br/><small>index.html, chat.js</small>"]
         APIGW["API Gateway<br/><small>REST API</small>"]
         LAMBDA1["Lambda: genbi-chat<br/><small>KB → LLM → Redshift</small>"]
@@ -142,7 +142,7 @@ flowchart LR
 | **Network** | Public endpoints for all services |
 | **Cost** | Near-zero when idle (Redshift Serverless scales to zero) |
 
-This is what's currently deployed at `https://d1k3nghlesd8gk.cloudfront.net/`.
+This version can be deployed to CloudFront for quick public access with minimal infrastructure.
 
 ### Enterprise Version (Recommended for Production)
 
