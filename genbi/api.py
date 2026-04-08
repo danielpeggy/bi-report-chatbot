@@ -22,7 +22,7 @@ RS_DATABASE = 'dev'
 # QuickSight config
 QS_ACCOUNT_ID = '530977327410'
 QS_REGION = 'us-east-1'
-QS_USER_ARN = 'arn:aws:quicksight:us-east-1:530977327410:user/default/Admin/danshek-Isengard'
+QS_NAMESPACE = 'default'
 QS_DASHBOARDS = {
     'executive': 'genbi-exec-dashboard',
     'sales': 'genbi-sales-dashboard',
@@ -120,14 +120,19 @@ def get_embed_url():
         return jsonify({'error': f'Unknown dashboard: {dashboard_key}'}), 400
 
     try:
-        response = qs_client.generate_embed_url_for_registered_user(
+        dashboard_arn = (
+            f'arn:aws:quicksight:{QS_REGION}:{QS_ACCOUNT_ID}'
+            f':dashboard/{dashboard_id}'
+        )
+        response = qs_client.generate_embed_url_for_anonymous_user(
             AwsAccountId=QS_ACCOUNT_ID,
-            UserArn=QS_USER_ARN,
+            Namespace=QS_NAMESPACE,
             SessionLifetimeInMinutes=600,
             AllowedDomains=[
                 'https://d1k3nghlesd8gk.cloudfront.net',
                 'http://localhost:5001'
             ],
+            AuthorizedResourceArns=[dashboard_arn],
             ExperienceConfiguration={
                 'Dashboard': {
                     'InitialDashboardId': dashboard_id

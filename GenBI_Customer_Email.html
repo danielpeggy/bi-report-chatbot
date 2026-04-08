@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; color: #232F3E; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px;">
+
+<p>Dear Team,</p>
+
+<p>Thank you for the opportunity to discuss how AI can enhance your business intelligence and data analytics capabilities. Following our conversation, I am pleased to share a <strong>working demo</strong> of the <strong>GenBI Analytics Platform</strong> — an AI-powered solution that combines interactive dashboards with a natural language chatbot, purpose-built for restaurant operations analytics.</p>
+
+<p>Below is a summary of what the demo includes, the issues it addresses, and how it can be adapted for your environment.</p>
+
+<hr style="border: 1px solid #e0e0e0; margin: 24px 0;">
+
+<h2 style="color: #232F3E;">1. What the Demo Contains</h2>
+
+<h3 style="color: #0073BB;">Data</h3>
+<p>The demo is built on a realistic synthetic dataset for <strong>ABC Restaurant Group</strong> — a 200-store restaurant chain across Hong Kong (HK Island, Kowloon, New Territories). The data warehouse contains <strong>27 million+ rows</strong> across a star schema:</p>
+
+<table style="border-collapse: collapse; width: 100%; font-size: 14px;">
+<tr style="background: #232F3E; color: white;">
+  <th style="padding: 8px 12px; text-align: left;">Table</th>
+  <th style="padding: 8px 12px; text-align: left;">Rows</th>
+  <th style="padding: 8px 12px; text-align: left;">Description</th>
+</tr>
+<tr style="background: #f5f5f5;"><td style="padding: 6px 12px;">fact_sales</td><td style="padding: 6px 12px;">17.5M</td><td style="padding: 6px 12px;">Transaction line items — revenue, COGS, gross profit</td></tr>
+<tr><td style="padding: 6px 12px;">fact_inventory</td><td style="padding: 6px 12px;">2.19M</td><td style="padding: 6px 12px;">Daily stock levels, waste tracking by item and store</td></tr>
+<tr style="background: #f5f5f5;"><td style="padding: 6px 12px;">fact_labor</td><td style="padding: 6px 12px;">665K</td><td style="padding: 6px 12px;">Employee shifts, labor costs, productivity metrics</td></tr>
+<tr><td style="padding: 6px 12px;">fact_service_performance</td><td style="padding: 6px 12px;">1.75M</td><td style="padding: 6px 12px;">Hourly service times by sales channel</td></tr>
+<tr style="background: #f5f5f5;"><td style="padding: 6px 12px;">fact_customer_feedback</td><td style="padding: 6px 12px;">28K</td><td style="padding: 6px 12px;">CSAT ratings, sentiment analysis, NPS scores</td></tr>
+<tr><td style="padding: 6px 12px;">fact_loyalty</td><td style="padding: 6px 12px;">2.49M</td><td style="padding: 6px 12px;">Loyalty points earned/redeemed, order values</td></tr>
+<tr style="background: #f5f5f5;"><td style="padding: 6px 12px;">fact_equipment</td><td style="padding: 6px 12px;">10K</td><td style="padding: 6px 12px;">Maintenance events, downtime, repair costs</td></tr>
+<tr><td style="padding: 6px 12px;">fact_financial</td><td style="padding: 6px 12px;">2.4K</td><td style="padding: 6px 12px;">Monthly store-level P&amp;L statements</td></tr>
+</table>
+<p style="font-size: 13px; color: #666;">Plus 7 dimension tables: date (365 days), stores (200), menu items (30), channels (5), payment methods (7), promotions (12), and customers (50K loyalty members).</p>
+
+<h3 style="color: #0073BB;">AWS Infrastructure</h3>
+<table style="border-collapse: collapse; width: 100%; font-size: 14px;">
+<tr style="background: #232F3E; color: white;">
+  <th style="padding: 8px 12px; text-align: left;">Layer</th>
+  <th style="padding: 8px 12px; text-align: left;">AWS Service</th>
+  <th style="padding: 8px 12px; text-align: left;">Purpose</th>
+</tr>
+<tr style="background: #f5f5f5;"><td style="padding: 6px 12px;">Raw Storage</td><td style="padding: 6px 12px;">Amazon S3</td><td style="padding: 6px 12px;">CSV data files from source systems</td></tr>
+<tr><td style="padding: 6px 12px;">ETL</td><td style="padding: 6px 12px;">AWS Glue (PySpark)</td><td style="padding: 6px 12px;">3 jobs: load dimensions, facts, and metadata</td></tr>
+<tr style="background: #f5f5f5;"><td style="padding: 6px 12px;">Data Warehouse</td><td style="padding: 6px 12px;">Amazon Redshift Serverless</td><td style="padding: 6px 12px;">Star schema analytics (genbi_mart)</td></tr>
+<tr><td style="padding: 6px 12px;">AI / LLM</td><td style="padding: 6px 12px;">Amazon Bedrock</td><td style="padding: 6px 12px;">Natural language → SQL generation (model-agnostic)</td></tr>
+<tr style="background: #f5f5f5;"><td style="padding: 6px 12px;">Knowledge Base</td><td style="padding: 6px 12px;">Amazon Bedrock KB + OpenSearch Serverless</td><td style="padding: 6px 12px;">RAG retrieval for schema, lineage, SQL examples</td></tr>
+<tr><td style="padding: 6px 12px;">Dashboards</td><td style="padding: 6px 12px;">Amazon QuickSight</td><td style="padding: 6px 12px;">5 embedded interactive dashboards</td></tr>
+<tr style="background: #f5f5f5;"><td style="padding: 6px 12px;">API</td><td style="padding: 6px 12px;">AWS Lambda + Amazon API Gateway</td><td style="padding: 6px 12px;">Serverless chat API and embed URL generation</td></tr>
+<tr><td style="padding: 6px 12px;">CDN</td><td style="padding: 6px 12px;">Amazon CloudFront + Amazon S3</td><td style="padding: 6px 12px;">Static website hosting with global delivery</td></tr>
+</table>
+
+<h3 style="color: #0073BB;">5 Interactive Dashboards</h3>
+<table style="border-collapse: collapse; width: 100%; font-size: 14px;">
+<tr style="background: #232F3E; color: white;">
+  <th style="padding: 8px 12px; text-align: left;">Dashboard</th>
+  <th style="padding: 8px 12px; text-align: left;">Key Metrics</th>
+</tr>
+<tr style="background: #f5f5f5;"><td style="padding: 6px 12px;"><strong>Executive Summary</strong></td><td style="padding: 6px 12px;">Total revenue (HK$1.09B), orders (7.5M), gross profit, regional comparison, monthly trends</td></tr>
+<tr><td style="padding: 6px 12px;"><strong>Sales &amp; Menu</strong></td><td style="padding: 6px 12px;">Revenue by category, top menu items, channel mix, payment methods, hourly sales patterns</td></tr>
+<tr style="background: #f5f5f5;"><td style="padding: 6px 12px;"><strong>Operations</strong></td><td style="padding: 6px 12px;">Labor costs, staffing efficiency, shift productivity, workforce utilization</td></tr>
+<tr><td style="padding: 6px 12px;"><strong>Customer Intelligence</strong></td><td style="padding: 6px 12px;">CSAT ratings, NPS scores, sentiment analysis, recommendation rate by region</td></tr>
+<tr style="background: #f5f5f5;"><td style="padding: 6px 12px;"><strong>Financial Performance</strong></td><td style="padding: 6px 12px;">EBITDA, net profit margins, cost structure breakdown, monthly P&amp;L</td></tr>
+</table>
+
+<hr style="border: 1px solid #e0e0e0; margin: 24px 0;">
+
+<h2 style="color: #232F3E;">2. The Problem We Are Solving</h2>
+
+<p>Most enterprise BI platforms today suffer from three challenges:</p>
+
+<table style="border-collapse: collapse; width: 100%; font-size: 14px;">
+<tr style="background: #FFF3CD;">
+  <td style="padding: 10px 12px; font-weight: bold; width: 30%;">Too many dashboards</td>
+  <td style="padding: 10px 12px;">Organizations maintain dozens of dashboards across departments. Business users waste time searching for the right one.</td>
+</tr>
+<tr style="background: #F8D7DA;">
+  <td style="padding: 10px 12px; font-weight: bold;">Numbers without context</td>
+  <td style="padding: 10px 12px;">A dashboard shows "Total Orders: 7,462,065" but doesn't explain what's included (line items or distinct transactions?), what's excluded, or how it was calculated.</td>
+</tr>
+<tr style="background: #FFF3CD;">
+  <td style="padding: 10px 12px; font-weight: bold;">Opaque data pipelines</td>
+  <td style="padding: 10px 12px;">When a number looks wrong, tracing it from dashboard → data warehouse → ETL → raw source requires tribal knowledge that lives in people's heads, not in the tool.</td>
+</tr>
+</table>
+
+<hr style="border: 1px solid #e0e0e0; margin: 24px 0;">
+
+<h2 style="color: #232F3E;">3. How the GenBI Solution Addresses These Issues</h2>
+
+<h3 style="color: #0073BB;">AI-Powered Natural Language Q&A</h3>
+<p>Instead of navigating multiple dashboards, users simply <strong>ask a question in plain English</strong>. The chatbot:</p>
+<ol>
+  <li><strong>Retrieves context</strong> from a Bedrock Knowledge Base (schema definitions, validated SQL patterns, business glossary) using RAG (Retrieval-Augmented Generation)</li>
+  <li><strong>Generates SQL</strong> using Amazon Bedrock LLM — producing syntactically correct Redshift queries with proper JOINs and aggregations</li>
+  <li><strong>Executes the query</strong> against Amazon Redshift Serverless and returns tabular results</li>
+  <li><strong>Recommends the right dashboard</strong> for deeper visual exploration</li>
+</ol>
+
+<h3 style="color: #0073BB;">End-to-End Data Lineage — From Source to Metric</h3>
+<p>For <strong>every answer</strong>, the chatbot traces the complete data pipeline:</p>
+<blockquote style="background: #f0f7ff; border-left: 4px solid #0073BB; padding: 12px 16px; margin: 12px 0; font-size: 13px;">
+<strong>Source System</strong>: POS terminals (store registers) →<br/>
+<strong>S3 Raw Landing</strong>: s3://.../pos/transactions/ (monthly CSV) + s3://.../pos/line_items/ →<br/>
+<strong>Glue ETL</strong> (load_fact_sales): JOIN transactions + line_items, calculate gross_profit →<br/>
+<strong>Redshift</strong> genbi_mart.fact_sales: 17.5M rows, grain = one row per line item →<br/>
+<strong>Dashboard Aggregation</strong>: COUNT(DISTINCT transaction_id) → order count
+</blockquote>
+<p>This gives business users <strong>complete transparency</strong> into every number they see — no more tribal knowledge required.</p>
+
+<h3 style="color: #0073BB;">Topic Guardrails</h3>
+<p>The chatbot is restricted to restaurant operations topics only (sales, revenue, inventory, labor, customer satisfaction, financial P&amp;L). Off-topic questions receive a polite redirect, ensuring the system stays focused and secure.</p>
+
+<h3 style="color: #0073BB;">Model-Agnostic &amp; Tool-Agnostic Design</h3>
+<p>The solution is built on <strong>Amazon Bedrock</strong>, which supports multiple LLM providers (Anthropic Claude, Amazon Titan, Meta Llama, Mistral, etc.). The LLM can be swapped by changing a single configuration value. Similarly, the knowledge base approach works with any ETL tool (Informatica, dbt), any data warehouse (Snowflake, BigQuery), and any BI tool (Power BI, Tableau).</p>
+
+<hr style="border: 1px solid #e0e0e0; margin: 24px 0;">
+
+<h2 style="color: #232F3E;">4. Try It Yourself</h2>
+
+<table style="border-collapse: collapse; width: 100%; font-size: 14px; margin-bottom: 16px;">
+<tr style="background: #232F3E; color: white;">
+  <th style="padding: 8px 12px; text-align: left;">Resource</th>
+  <th style="padding: 8px 12px; text-align: left;">Link</th>
+</tr>
+<tr style="background: #f5f5f5;">
+  <td style="padding: 8px 12px;"><strong>Live Demo</strong></td>
+  <td style="padding: 8px 12px;"><a href="https://d1k3nghlesd8gk.cloudfront.net" style="color: #0073BB;">https://d1k3nghlesd8gk.cloudfront.net</a></td>
+</tr>
+<tr>
+  <td style="padding: 8px 12px;"><strong>Source Code &amp; Documentation</strong></td>
+  <td style="padding: 8px 12px;"><a href="https://github.com/danielpeggy/bi-report-chatbot" style="color: #0073BB;">https://github.com/danielpeggy/bi-report-chatbot</a></td>
+</tr>
+</table>
+
+<p><strong>Sample questions to try in the chatbot:</strong></p>
+<ul>
+  <li>"What is the total revenue by region?"</li>
+  <li>"Which menu items have the highest profit margin?"</li>
+  <li>"Show me monthly order trends for 2023"</li>
+  <li>"What is the average CSAT rating by store?"</li>
+  <li>"What are the labor costs per order by region?"</li>
+</ul>
+
+<p>The GitHub repository contains the full source code, deployment guide, architecture diagrams, knowledge base documents, and ETL scripts — everything needed to replicate or customize the solution for your environment.</p>
+
+<hr style="border: 1px solid #e0e0e0; margin: 24px 0;">
+
+<h2 style="color: #232F3E;">5. Next Steps</h2>
+
+<p>I would welcome the opportunity to walk through the demo together and discuss how this approach can be adapted for your data landscape. Potential next steps include:</p>
+<ol>
+  <li><strong>Live demo walkthrough</strong> — 30-minute session to explore dashboards and chatbot capabilities</li>
+  <li><strong>Architecture workshop</strong> — Map your current data pipeline to the GenBI approach</li>
+  <li><strong>PoC scoping</strong> — Identify 2–3 dashboards and a target dataset for a proof-of-concept</li>
+</ol>
+
+<p>Please let me know your availability and I will arrange accordingly.</p>
+
+<p style="margin-top: 24px;">
+Best regards,<br/>
+<strong>Daniel Shek</strong><br/>
+Solutions Architect, Amazon Web Services
+</p>
+
+</body>
+</html>
