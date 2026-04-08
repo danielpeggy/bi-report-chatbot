@@ -98,6 +98,143 @@ flowchart TB
 
 ---
 
+## Deployment Architectures
+
+### Current Demo Version
+
+The demo deployment is designed for quick setup and public accessibility — ideal for PoC presentations and stakeholder demos.
+
+```mermaid
+flowchart LR
+    subgraph Internet["Public Internet"]
+        USER["End User<br/><small>Browser</small>"]
+    end
+
+    subgraph AWS["AWS Cloud"]
+        CF["CloudFront<br/><small>d1k3nghlesd8gk.cloudfront.net</small>"]
+        S3W["S3 Static Website<br/><small>index.html, chat.js</small>"]
+        APIGW["API Gateway<br/><small>REST API</small>"]
+        LAMBDA1["Lambda: genbi-chat<br/><small>KB → LLM → Redshift</small>"]
+        LAMBDA2["Lambda: genbi-quicksight<br/><small>Embed URL generation</small>"]
+        KB["Bedrock KB<br/><small>RAG retrieval</small>"]
+        LLM["Bedrock LLM<br/><small>Text-to-SQL</small>"]
+        RS["Redshift Serverless<br/><small>genbi_mart</small>"]
+        QS["QuickSight<br/><small>5 dashboards</small>"]
+    end
+
+    USER -->|HTTPS| CF
+    CF --> S3W
+    CF -->|/api/*| APIGW
+    APIGW --> LAMBDA1
+    APIGW --> LAMBDA2
+    LAMBDA1 --> KB
+    LAMBDA1 --> LLM
+    LAMBDA1 --> RS
+    LAMBDA2 --> QS
+```
+
+| Aspect | Demo Setup |
+|--------|-----------|
+| **Access** | Public via CloudFront URL |
+| **Compute** | AWS Lambda (serverless, pay-per-request) |
+| **API** | API Gateway REST with Lambda proxy integration |
+| **Auth** | None (open access) |
+| **Network** | Public endpoints for all services |
+| **Cost** | Near-zero when idle (Redshift Serverless scales to zero) |
+
+This is what's currently deployed at `https://d1k3nghlesd8gk.cloudfront.net/`.
+
+### Enterprise Version (Recommended for Production)
+
+For production deployments, the architecture adds **network isolation**, **authentication**, **dual-path access** (external + internal), and **operational monitoring**. No data, dashboards, or chatbot responses are accessible to unauthorized users.
+
+```mermaid
+flowchart TB
+    subgraph External["External Access Path"]
+        EXT_USER["External User<br/><small>Partners / Demos</small>"]
+        WAF["AWS WAF<br/><small>Rate limit, geo-block,<br/>SQL injection protection</small>"]
+        CF_E["CloudFront<br/><small>genbi.company.com</small>"]
+        COG["Amazon Cognito<br/><small>SAML / OIDC SSO</small>"]
+        PUB_ALB["Public ALB<br/><small>HTTPS only</small>"]
+    end
+
+    subgraph Internal["Internal Access Path"]
+        INT_USER["Internal User<br/><small>Staff / Analysts</small>"]
+        CORP["Corporate Network<br/><small>Office / VPN Client</small>"]
+        DX["AWS Direct Connect<br/>OR Site-to-Site VPN<br/>OR Client VPN"]
+        TGW["Transit Gateway"]
+        PRIV_ALB["Private ALB<br/><small>genbi.internal.company.com<br/>(Route 53 Private Hosted Zone)</small>"]
+    end
+
+    subgraph VPC["Customer VPC (Private Subnets)"]
+        EC2["EC2 / ECS Fargate<br/><small>GenBI Flask API<br/>Multi-AZ Auto Scaling</small>"]
+        VPCE_BR["Bedrock<br/>VPC Endpoint"]
+        VPCE_RS["Redshift<br/>VPC Endpoint"]
+        KB_E["Bedrock KB<br/><small>RAG</small>"]
+        LLM_E["Bedrock LLM<br/><small>Text-to-SQL</small>"]
+        RS_E["Redshift Serverless<br/><small>genbi_mart</small>"]
+        QS_E["QuickSight<br/><small>Row-Level Security</small>"]
+    end
+
+    subgraph Ops["Operational Layer"]
+        CW["CloudWatch<br/><small>Metrics, Alarms</small>"]
+        XR["X-Ray<br/><small>End-to-end Tracing</small>"]
+        CT["CloudTrail<br/><small>Audit Logs</small>"]
+    end
+
+    EXT_USER --> WAF --> CF_E --> COG --> PUB_ALB
+    INT_USER --> CORP --> DX --> TGW --> PRIV_ALB
+
+    PUB_ALB --> EC2
+    PRIV_ALB --> EC2
+
+    EC2 --> VPCE_BR --> KB_E
+    EC2 --> VPCE_BR --> LLM_E
+    EC2 --> VPCE_RS --> RS_E
+    EC2 --> QS_E
+
+    EC2 -.-> CW
+    EC2 -.-> XR
+    EC2 -.-> CT
+```
+
+#### Dual Access Paths
+
+| Aspect | External Path | Internal Path |
+|--------|--------------|---------------|
+| **Who** | Partners, executives, demo audiences | Internal analysts, operations staff |
+| **Entry** | Internet → CloudFront + WAF | Corporate network → DX / VPN |
+| **DNS** | `genbi.company.com` (public) | `genbi.internal.company.com` (Route 53 Private Hosted Zone) |
+| **Load Balancer** | Public ALB (internet-facing) | Private ALB (internal only, no public IP) |
+| **Auth** | Cognito with SAML/OIDC (corporate SSO) | Corporate AD / Kerberos (already authenticated on network) |
+| **Protection** | WAF rate-limiting, geo-blocking, SQL injection rules | Security Groups + NACLs (trusted network) |
+
+Both paths route to the **same EC2/ECS compute layer** — no duplication of application infrastructure.
+
+#### Internal Connectivity Options
+
+| Option | Best For | Latency | Setup |
+|--------|----------|---------|-------|
+| **AWS Direct Connect (DX)** | HQ / regional offices with high traffic | Lowest (dedicated fiber) | Weeks (physical cross-connect) |
+| **Site-to-Site VPN** | Branch offices, DX backup | Low (encrypted over internet) | Hours (IPsec config) |
+| **AWS Client VPN** | Remote workers / WFH analysts | Medium (per-user OpenVPN) | Minutes (certificate-based) |
+
+All three terminate at a Transit Gateway (or Virtual Private Gateway) attached to the customer VPC.
+
+#### Enterprise Security Controls
+
+| Control | Purpose |
+|---------|---------|
+| **VPC Endpoints** | Bedrock and Redshift traffic never leaves AWS backbone — no internet exposure |
+| **KMS Encryption** | At-rest encryption for Redshift, S3, Bedrock KB, and CloudWatch Logs |
+| **TLS Everywhere** | All in-transit data encrypted (ALB → EC2, VPC endpoints, DX with MACsec) |
+| **QuickSight RLS** | Row-Level Security — each user sees only their authorized region/store data |
+| **WAF Rules** | Rate limiting (prevent abuse), geo-blocking, OWASP managed rule sets |
+| **CloudTrail** | Full API audit log — who queried what, when |
+| **X-Ray Tracing** | End-to-end request tracing: KB retrieval → LLM → Redshift → response |
+
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -336,6 +473,9 @@ The chatbot only responds to restaurant operations questions. Off-topic queries 
 bi-report-chatbot/
 ├── embed/
 │   └── index.html              # Main app — QuickSight dashboards + chat sidebar
+├── lambda/
+│   ├── genbi_chat.py           # Lambda: KB retrieval → SQL generation → Redshift query
+│   └── genbi_quicksight.py     # Lambda: QuickSight embed URL generation
 ├── genbi/
 │   ├── api.py                  # Flask REST API (chat, QuickSight embed, health)
 │   ├── agent.py                # AI agent: KB retrieval → SQL generation → Redshift query
