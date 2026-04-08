@@ -55,7 +55,7 @@ flowchart TB
 
     subgraph AI["AI & Analytics Layer"]
         KB["Bedrock Knowledge Base<br/><small>Schema, lineage, SQL examples (RAG)</small>"]
-        CLAUDE["Amazon Bedrock Claude<br/><small>Text-to-SQL generation</small>"]
+        CLAUDE["Amazon Bedrock LLM<br/><small>Text-to-SQL generation</small>"]
         QS["Amazon QuickSight<br/><small>5 embedded dashboards</small>"]
     end
 
@@ -91,7 +91,7 @@ flowchart TB
 | **CDN** | Amazon CloudFront | Global content delivery, HTTPS |
 | **Static Hosting** | Amazon S3 | HTML/JS/CSS files |
 | **API Backend** | AWS Lambda + Function URL | Chat API, QuickSight embed URL generation |
-| **AI/ML** | Amazon Bedrock (Claude) | Natural language to SQL generation |
+| **AI/ML** | Amazon Bedrock LLM | Natural language to SQL generation (model-agnostic) |
 | **Knowledge Base** | Amazon Bedrock KB | RAG retrieval for schema, lineage, SQL examples |
 | **Data Warehouse** | Amazon Redshift Serverless | Star schema analytics (27M+ rows) |
 | **ETL** | AWS Glue (PySpark) | S3 CSV to Redshift transformation |
@@ -175,7 +175,7 @@ User: "What is the total revenue by region?"
         │  SQL examples via RAG        │
         └──────────┬───────────────────┘
                    ▼
-        ┌─── Amazon Bedrock (Claude) ──┐
+        ┌─── Amazon Bedrock LLM ───────┐
         │  Generate SQL query from     │
         │  natural language + context  │
         └──────────┬───────────────────┘
@@ -186,11 +186,44 @@ User: "What is the total revenue by region?"
                    ▼
         Response with:
         - Query results (table)
-        - Explanation
-        - End-to-end data lineage
+        - General explanation
         - Recommended dashboard
+        - End-to-end data lineage
         - SQL (expandable)
 ```
+
+> **Model-agnostic design**: The LLM layer uses Amazon Bedrock, which supports multiple foundation models (Anthropic Claude, Amazon Titan, Meta Llama, Mistral, Cohere, AI21, etc.). The model can be swapped by changing a single `MODEL_ID` configuration — no code changes required.
+
+### What Information Is Indexed in the Knowledge Base
+
+The Knowledge Base is the brain that gives the LLM the context it needs to generate accurate SQL and meaningful explanations. It is built from **6 documents** that capture metadata from every stage of the data pipeline:
+
+| KB Document | Pipeline Stage | What It Contains |
+|-------------|---------------|------------------|
+| **01_schema_overview.md** | Redshift | Table definitions, column names and types, primary/foreign keys, row counts, join rules (natural keys vs surrogate keys), grain of each fact table |
+| **02_data_lineage.md** | Glue ETL + Redshift | How each calculated metric is derived (e.g., `gross_profit = line_total - cogs_amount - discount_amount`), ETL schedule, data freshness SLAs, known data characteristics |
+| **03_sql_examples.md** | Redshift | Pre-validated SQL query patterns for common business questions — revenue by region, labor cost per order, waste rate by category, monthly P&L, etc. |
+| **04_business_glossary.md** | Business Context | Business metric definitions (AOV, CSAT, NPS, EBITDA), Hong Kong market context (regions, payment methods, currency, tax rules, minimum wage) |
+| **05_dashboard_catalog.md** | QuickSight | Dashboard names, IDs, visual descriptions, which metrics each dashboard shows, which fact/dim tables feed each dashboard, and a recommendation guide mapping question topics to dashboards |
+| **06_pipeline_lineage.md** | All Stages (End-to-End) | For each fact table: source system origin → S3 raw file paths and column names → Glue ETL job name, JOINs, and transforms → Redshift target table and grain → dashboard aggregation functions |
+
+### How RAG Retrieval Powers Each Response Area
+
+When a user asks a question, the system uses **Retrieval-Augmented Generation (RAG)** in three steps:
+
+**Step 1 — Vector Search**: The user's question is converted to a vector embedding and compared against the pre-indexed KB document chunks stored in Amazon OpenSearch Serverless. The top-K most relevant chunks are retrieved (e.g., asking about "total orders" retrieves schema info about `fact_sales`, the SQL example for `COUNT(DISTINCT transaction_id)`, and the pipeline lineage for POS data).
+
+**Step 2 — Contextual Prompt Assembly**: The retrieved KB chunks are injected into the LLM prompt alongside the user's question and system instructions. This gives the LLM precise, verified context rather than relying on general training knowledge.
+
+**Step 3 — Structured Generation**: The LLM generates a structured JSON response with five fields, each informed by different KB documents:
+
+| Response Area | What the LLM Generates | KB Documents Used |
+|---------------|------------------------|-------------------|
+| **SQL Query** | Syntactically correct Redshift SQL with proper JOINs, aggregations, and filters | `01_schema_overview` (table/column names, join keys), `03_sql_examples` (validated patterns) |
+| **General Explanation** | Plain-English description of what the query does and what the results mean | `04_business_glossary` (metric definitions, benchmarks, HK market context) |
+| **Recommended Dashboard** | Which of the 5 QuickSight dashboards best visualizes this data | `05_dashboard_catalog` (dashboard-to-topic mapping) |
+| **Data Lineage** | End-to-end pipeline trace from source system to final aggregated number | `06_pipeline_lineage` (source systems, S3 paths, Glue transforms, table grain), `02_data_lineage` (calculated field formulas) |
+| **Assumptions** | Any assumptions made about ambiguous questions | `04_business_glossary` (e.g., "revenue" means `line_total` not `gross_profit`) |
 
 ### Data Lineage Example
 
@@ -209,6 +242,19 @@ For every answer, the chatbot traces the full pipeline:
 >
 > **Dashboard Aggregation**:
 > COUNT(DISTINCT transaction_id) to convert line-item grain to order count
+
+### Tool-Agnostic Design
+
+The knowledge base approach is **not tied to any specific ETL or BI tool**. The KB documents capture metadata — schema definitions, transformation logic, lineage, and dashboard catalogs — that can be extracted from any enterprise data stack:
+
+| This Project Uses | Can Be Replaced With | KB Documents Still Apply |
+|-------------------|---------------------|--------------------------|
+| **AWS Glue** (ETL) | Informatica, dbt, Talend, Azure Data Factory, Apache Airflow | `02_data_lineage.md`, `06_pipeline_lineage.md` — document transforms regardless of the tool |
+| **Amazon Redshift** (Data Warehouse) | Snowflake, BigQuery, Azure Synapse, Databricks SQL | `01_schema_overview.md`, `03_sql_examples.md` — adapt SQL dialect as needed |
+| **Amazon QuickSight** (BI) | Power BI, Tableau, Looker, Apache Superset | `05_dashboard_catalog.md` — document which dashboards show which metrics |
+| **Amazon Bedrock** (LLM) | Azure OpenAI, Google Vertex AI, self-hosted models | Swap the LLM API call — the KB and prompt structure remain the same |
+
+The key insight is: **the value is in the metadata documentation, not the specific tools.** Any organization that documents its schema, transformation logic, and dashboard catalog in structured markdown can enable the same AI-powered Q&A experience over their data.
 
 ### Topic Guardrails
 

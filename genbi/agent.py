@@ -1,11 +1,11 @@
 """
 GenBI Chat Agent - Text-2-SQL with Data Lineage Awareness
-Simple Python agent using Amazon Bedrock Claude + Knowledge Base RAG
+Simple Python agent using Amazon Bedrock LLM + Knowledge Base RAG
 
 Flow:
 1. User asks a business question
 2. Agent retrieves relevant schema/lineage/SQL context from Bedrock KB
-3. Agent generates SQL query using Claude
+3. Agent generates SQL query using Bedrock LLM
 4. Agent executes SQL against Redshift
 5. Agent formats response with data lineage explanation
 """
@@ -22,7 +22,7 @@ redshift_data = boto3.client('redshift-data', region_name='us-east-1')
 
 # Configuration
 KB_ID = "MYUSWRTES8"
-MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"  # Can be swapped with any Bedrock-supported model (Anthropic, Amazon Titan, Meta Llama, etc.)
 WORKGROUP = "demo-sales-related"
 DATABASE = "dev"
 SCHEMA = "genbi_mart"
@@ -50,7 +50,7 @@ def retrieve_context(question: str, num_results: int = 5) -> str:
 
 
 def generate_sql(question: str, context: str) -> dict:
-    """Generate SQL query using Claude with RAG context"""
+    """Generate SQL query using Bedrock LLM with RAG context"""
     system_prompt = """You are a SQL expert for the ABC Restaurant Group data warehouse.
 You generate Redshift SQL queries based on the schema in genbi_mart.
 

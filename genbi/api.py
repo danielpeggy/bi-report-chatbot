@@ -71,7 +71,7 @@ def chat_endpoint():
             yield send_event('status', {'step': 1, 'message': 'Knowledge base search complete', 'elapsed': round(t1 - t0, 1), 'done': True})
 
             # Step 2: SQL Generation
-            yield send_event('status', {'step': 2, 'message': 'Generating SQL with Claude...', 'elapsed': round(t1 - t0, 1)})
+            yield send_event('status', {'step': 2, 'message': 'Generating SQL with Bedrock LLM...', 'elapsed': round(t1 - t0, 1)})
             sql_info = generate_sql(question, context)
             t2 = time.time()
             yield send_event('status', {'step': 2, 'message': 'SQL generated', 'elapsed': round(t2 - t0, 1), 'done': True})
