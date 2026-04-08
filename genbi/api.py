@@ -124,6 +124,10 @@ def get_embed_url():
             AwsAccountId=QS_ACCOUNT_ID,
             UserArn=QS_USER_ARN,
             SessionLifetimeInMinutes=600,
+            AllowedDomains=[
+                'https://d1k3nghlesd8gk.cloudfront.net',
+                'http://localhost:5001'
+            ],
             ExperienceConfiguration={
                 'Dashboard': {
                     'InitialDashboardId': dashboard_id
