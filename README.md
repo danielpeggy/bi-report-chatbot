@@ -41,38 +41,38 @@ flowchart TB
         FIN["Finance / ERP<br/><small>Monthly P&L</small>"]
     end
 
-    subgraph S3["S3 Raw Landing Zone"]
-        RAW["s3://genbi-mcdhk-raw/<br/><small>pos/ | operations/ | customer/ | financial/ | reference/</small><br/><small>CSV files, monthly/daily partitions</small>"]
+    subgraph S3["Amazon S3"]
+        RAW[("S3 Raw Landing Zone<br/><small>pos/ | operations/ | customer/<br/>financial/ | reference/</small>")]
     end
 
-    subgraph Glue["AWS Glue ETL"]
-        ETL["3 PySpark Jobs<br/><small>load_dimensions | load_facts | load_metadata</small><br/><small>JOINs, type casting, calculated fields</small>"]
+    subgraph Glue["AWS Glue"]
+        ETL{{"Glue PySpark ETL<br/><small>load_dimensions | load_facts<br/>load_metadata</small>"}}
     end
 
     subgraph Redshift["Amazon Redshift Serverless"]
-        DW["genbi_mart Star Schema<br/><small>7 dimension + 8 fact tables</small><br/><small>27M+ rows</small>"]
+        DW[("genbi_mart Star Schema<br/><small>7 dims + 8 facts | 27M+ rows</small>")]
     end
 
     subgraph AI["AI & Analytics Layer"]
-        KB["Bedrock Knowledge Base<br/><small>Schema, lineage, SQL examples (RAG)</small>"]
-        CLAUDE["Amazon Bedrock LLM<br/><small>Text-to-SQL generation</small>"]
+        KB["Amazon Bedrock<br/>Knowledge Base<br/><small>RAG: schema, lineage, SQL</small>"]
+        LLM["Amazon Bedrock LLM<br/><small>Text-to-SQL generation</small>"]
         QS["Amazon QuickSight<br/><small>5 embedded dashboards</small>"]
     end
 
     subgraph Presentation["Presentation Layer"]
-        CF["CloudFront CDN"]
-        S3W["S3 Static Website<br/><small>HTML / JS / CSS</small>"]
-        LAMBDA["Lambda Function<br/><small>Chat API + Embed URLs</small>"]
+        CF["Amazon CloudFront"]
+        S3W[("Amazon S3<br/><small>Static Website</small>")]
+        LAMBDA{{"AWS Lambda<br/><small>Chat API + Embed URLs</small>"}}
         BROWSER["End User Browser"]
     end
 
     Sources --> |"CSV exports"| S3
     S3 --> |"PySpark read"| Glue
     Glue --> |"JDBC write"| Redshift
-    Redshift --> CLAUDE
-    KB --> CLAUDE
+    Redshift --> LLM
+    KB --> LLM
     Redshift --> QS
-    CLAUDE --> LAMBDA
+    LLM --> LAMBDA
     QS --> CF
     S3W --> CF
     LAMBDA --> CF
@@ -83,14 +83,14 @@ flowchart TB
 
 ### Technology Stack
 
-| Layer | Service | Purpose |
-|-------|---------|---------|
-| **Frontend** | HTML5, CSS3, JavaScript, Chart.js | Dashboard UI, chat interface |
+| Layer | AWS Service | Purpose |
+|-------|------------|---------|
+| **Frontend** | HTML5, CSS3, JavaScript | Dashboard UI, chat interface |
 | **CDN** | Amazon CloudFront | Global content delivery, HTTPS |
 | **Static Hosting** | Amazon S3 | HTML/JS/CSS files |
-| **API Backend** | AWS Lambda + Function URL | Chat API, QuickSight embed URL generation |
-| **AI/ML** | Amazon Bedrock LLM | Natural language to SQL generation (model-agnostic) |
-| **Knowledge Base** | Amazon Bedrock KB | RAG retrieval for schema, lineage, SQL examples |
+| **API Backend** | AWS Lambda + Amazon API Gateway | Chat API, QuickSight embed URL generation |
+| **AI/ML** | Amazon Bedrock | Natural language to SQL generation (model-agnostic) |
+| **Knowledge Base** | Amazon Bedrock Knowledge Bases + Amazon OpenSearch Serverless | RAG retrieval for schema, lineage, SQL examples |
 | **Data Warehouse** | Amazon Redshift Serverless | Star schema analytics (27M+ rows) |
 | **ETL** | AWS Glue (PySpark) | S3 CSV to Redshift transformation |
 | **Dashboards** | Amazon QuickSight | 5 embedded interactive dashboards |
@@ -98,33 +98,247 @@ flowchart TB
 
 ---
 
-## Deployment Architectures
+## Getting Started
 
-### Current Demo Version
+### Prerequisites
 
-The demo deployment is designed for quick setup and public accessibility — ideal for PoC presentations and stakeholder demos.
+Before deploying, ensure the following are in place:
+
+| Requirement | Details |
+|-------------|---------|
+| **AWS Account** | With IAM permissions for S3, Glue, Redshift, Bedrock, QuickSight, Lambda, API Gateway, CloudFront |
+| **Amazon QuickSight** | Enterprise edition (required for dashboard embedding via `generate-embed-url-for-registered-user`) |
+| **Amazon Bedrock** | Model access enabled in your region for your chosen LLM (e.g., Anthropic Claude, Amazon Titan, Meta Llama) |
+| **Python 3.9+** | For data generation scripts and local Flask development |
+| **pip packages** | `flask`, `flask-cors`, `boto3` (`pip install flask flask-cors boto3`) |
+| **AWS CLI v2** | Configured with `aws configure` (access key, secret key, default region `us-east-1`) |
+
+### Step 1: Clone Repository and Generate Raw Data
+
+The `genbi/raw/` directory is excluded from this repository (~2.4 GB of synthetic data). You must generate it locally before proceeding.
+
+```bash
+# Clone the repository
+git clone https://github.com/danielpeggy/bi-report-chatbot.git
+cd bi-report-chatbot
+
+# Install Python dependencies
+pip install flask flask-cors boto3
+
+# Generate legacy POS data (orders + order items)
+python3 generate_data.py
+
+# Generate all domain-specific data
+cd genbi
+python3 generate_pos.py              # POS transactions: pos_transactions_YYYY_MM.csv, pos_line_items_YYYY_MM.csv (12 months)
+python3 generate_operations.py       # Inventory, labor shifts, service times, equipment maintenance
+python3 generate_market_financial.py  # Competitor pricing, monthly store P&L statements
+python3 generate_customer.py          # Customer profiles (50K), feedback surveys (28K), loyalty transactions
+python3 generate_reference.py         # Reference data: 200 stores, 30 menu items, channels, payments, promotions
+cd ..
+```
+
+All data uses seed 42 (fully reproducible). Generated files appear under `genbi/raw/` organized by domain: `pos/`, `operations/`, `customer/`, `financial/`, `reference/`.
+
+### Step 2: Create S3 Bucket and Upload Raw Data
+
+```bash
+# Create a dedicated S3 bucket for raw data
+aws s3 mb s3://YOUR-RAW-DATA-BUCKET --region us-east-1
+
+# Upload all generated data (preserves folder structure)
+aws s3 sync genbi/raw/ s3://YOUR-RAW-DATA-BUCKET/ --exclude "*.DS_Store"
+
+# Verify upload — you should see subdirectories: pos/, operations/, customer/, financial/, reference/
+aws s3 ls s3://YOUR-RAW-DATA-BUCKET/
+```
+
+### Step 3: Set Up Amazon Redshift Serverless
+
+```bash
+# 1. Create a Redshift Serverless namespace
+aws redshift-serverless create-namespace \
+  --namespace-name YOUR-NAMESPACE \
+  --admin-username admin \
+  --admin-user-password YOUR-PASSWORD \
+  --db-name dev
+
+# 2. Create a workgroup attached to the namespace
+aws redshift-serverless create-workgroup \
+  --workgroup-name YOUR-WORKGROUP \
+  --namespace-name YOUR-NAMESPACE \
+  --base-capacity 8
+
+# 3. Create the genbi_mart schema and all tables
+#    Run the DDL scripts from the sql/ directory using the Redshift Data API:
+aws redshift-data execute-statement \
+  --workgroup-name YOUR-WORKGROUP \
+  --database dev \
+  --sql "CREATE SCHEMA IF NOT EXISTS genbi_mart;"
+
+# 4. Run the full schema creation (tables, constraints, indexes)
+#    Copy the SQL from sql/01_schema_and_dimensions.sql and execute via Redshift Query Editor
+#    or use the Data API for each statement
+```
+
+After this step, you should have the `genbi_mart` schema with 7 dimension tables and 8 fact tables (empty — data is loaded in Step 4).
+
+### Step 4: Run AWS Glue ETL Jobs
+
+Upload the PySpark scripts from [`genbi/etl/`](genbi/etl/) as Glue jobs. Each job reads from your S3 bucket and writes to Redshift.
+
+```bash
+# 1. Upload ETL scripts to S3 (Glue reads scripts from S3)
+aws s3 cp genbi/etl/load_dimensions.py s3://YOUR-RAW-DATA-BUCKET/scripts/
+aws s3 cp genbi/etl/load_facts.py s3://YOUR-RAW-DATA-BUCKET/scripts/
+aws s3 cp genbi/etl/load_metadata.py s3://YOUR-RAW-DATA-BUCKET/scripts/
+
+# 2. Create Glue jobs (via Console or CLI) with:
+#    - IAM role with S3 read + Redshift write permissions
+#    - Glue version 4.0 (Spark 3.3)
+#    - Worker type: G.1X, Number of workers: 2
+#    - Job parameters:
+#      --S3_BUCKET: YOUR-RAW-DATA-BUCKET
+#      --REDSHIFT_URL: jdbc:redshift://YOUR-WORKGROUP.ACCOUNT.REGION.redshift-serverless.amazonaws.com:5439/dev
+#      --REDSHIFT_SCHEMA: genbi_mart
+
+# 3. Run jobs in order (dimensions first, then facts, then metadata):
+aws glue start-job-run --job-name load_dimensions  # ~2 min — loads 7 dimension tables
+aws glue start-job-run --job-name load_facts        # ~15 min — loads 8 fact tables (27M+ rows)
+aws glue start-job-run --job-name load_metadata     # ~1 min — loads ETL registry + data dictionary
+```
+
+| Job | Script | What It Loads | Duration |
+|-----|--------|---------------|----------|
+| **load_dimensions** | [`load_dimensions.py`](genbi/etl/load_dimensions.py) | 7 dimension tables (dim_date, dim_store, dim_menu_item, etc.) | ~2 min |
+| **load_facts** | [`load_facts.py`](genbi/etl/load_facts.py) | 8 fact tables with JOINs, calculated fields (gross_profit, labor_cost_per_hour), type casting | ~15 min |
+| **load_metadata** | [`load_metadata.py`](genbi/etl/load_metadata.py) | ETL registry, column-level lineage, data dictionary (used for governance) | ~1 min |
+
+### Step 5: Set Up Amazon Bedrock Knowledge Base
+
+The Knowledge Base gives the chatbot the context it needs (schema, lineage, SQL examples) via RAG retrieval.
+
+```bash
+# 1. Create a separate S3 bucket (or prefix) for KB documents
+aws s3 sync genbi/kb_docs/ s3://YOUR-RAW-DATA-BUCKET/kb_docs/
+
+# 2. In the AWS Console, go to Amazon Bedrock → Knowledge Bases → Create:
+#    - Name: genbi-knowledge-base
+#    - Data source: S3 bucket path s3://YOUR-RAW-DATA-BUCKET/kb_docs/
+#    - Embedding model: Amazon Titan Embeddings V2 (or Cohere Embed)
+#    - Vector store: Amazon OpenSearch Serverless (auto-created)
+#    - Chunking strategy: Default (300 tokens with 20% overlap)
+#
+# 3. After creation, run a sync/ingestion job to index the 6 documents
+# 4. Note the Knowledge Base ID (e.g., MYUSWRTES8) — you'll need it for configuration
+```
+
+The 6 KB documents in [`genbi/kb_docs/`](genbi/kb_docs/) contain:
+- `01_schema_overview.md` — Table definitions, column types, join rules
+- `02_data_lineage.md` — Calculated metric formulas, ETL schedule
+- `03_sql_examples.md` — Pre-validated SQL patterns for common questions
+- `04_business_glossary.md` — Business metric definitions, HK market context
+- `05_dashboard_catalog.md` — Dashboard names, IDs, visual descriptions
+- `06_pipeline_lineage.md` — End-to-end pipeline trace for every table
+
+### Step 6: Set Up Amazon QuickSight Dashboards
+
+```bash
+# 1. Subscribe to QuickSight Enterprise (if not already)
+#    AWS Console → QuickSight → Sign up → Enterprise edition
+
+# 2. Create a Redshift data source in QuickSight:
+#    QuickSight → Datasets → New dataset → Redshift (Manual connect)
+#    - Connection name: genbi-redshift-ds
+#    - Server: YOUR-WORKGROUP.ACCOUNT.REGION.redshift-serverless.amazonaws.com
+#    - Port: 5439
+#    - Database: dev
+#    - Credentials: admin / YOUR-PASSWORD
+
+# 3. Create 5 datasets using Custom SQL (one per dashboard):
+#    - Executive: SELECT from fact_sales JOIN dim_date JOIN dim_store
+#    - Sales & Menu: SELECT from fact_sales JOIN dim_menu_item JOIN dim_channel JOIN dim_payment_method
+#    - Operations: SELECT from fact_labor JOIN dim_store JOIN dim_date
+#    - Customer Intelligence: SELECT from fact_customer_feedback JOIN dim_store JOIN dim_date
+#    - Financial: SELECT from fact_financial JOIN dim_store JOIN dim_date
+
+# 4. Create 5 analyses → publish as dashboards with IDs:
+#    genbi-exec-dashboard, genbi-sales-dashboard, genbi-ops-dashboard,
+#    genbi-cust-dashboard, genbi-fin-dashboard
+
+# 5. Enable embedding: QuickSight → Manage QuickSight → Domains and Embedding
+#    Add your deployment domain (e.g., http://localhost:5001, https://your-cloudfront-domain)
+```
+
+### Step 7: Configure and Run the Application
+
+Update the configuration in [`genbi/agent.py`](genbi/agent.py) and [`genbi/api.py`](genbi/api.py):
+
+```python
+# genbi/agent.py — update these values:
+KB_ID = "YOUR-KB-ID"                          # From Step 5
+MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"  # Or any Bedrock-supported model
+WORKGROUP = "YOUR-WORKGROUP"                   # From Step 3
+DATABASE = "dev"
+SCHEMA = "genbi_mart"
+
+# genbi/api.py — update these values:
+QS_ACCOUNT_ID = 'YOUR-AWS-ACCOUNT-ID'         # 12-digit AWS account ID
+QS_USER_ARN = 'arn:aws:quicksight:us-east-1:ACCOUNT:user/default/YOUR-QS-USER'
+```
+
+```bash
+# Start the local development server
+cd genbi
+python3 api.py
+
+# Open http://localhost:5001 in your browser
+# - QuickSight dashboards load in the main panel
+# - GenBI chatbot is in the right sidebar
+# - Try: "What is the total revenue by region?"
+```
+
+---
+
+## Deployment Architectures (Demo Version)
+
+### Demo Deployment — CloudFront + Lambda
+
+The demo deployment is serverless and designed for quick setup — ideal for PoC presentations and stakeholder demos. It can be deployed to Amazon CloudFront for public access with minimal infrastructure.
 
 ```mermaid
 flowchart LR
     subgraph Internet["Public Internet"]
-        USER["End User<br/><small>Browser</small>"]
+        USER["End User<br/>Browser"]
     end
 
-    subgraph AWS["AWS Cloud"]
-        CF["CloudFront<br/><small>CDN + HTTPS</small>"]
-        S3W["S3 Static Website<br/><small>index.html, chat.js</small>"]
-        APIGW["API Gateway<br/><small>REST API</small>"]
-        LAMBDA1["Lambda: genbi-chat<br/><small>KB → LLM → Redshift</small>"]
-        LAMBDA2["Lambda: genbi-quicksight<br/><small>Embed URL generation</small>"]
-        KB["Bedrock KB<br/><small>RAG retrieval</small>"]
-        LLM["Bedrock LLM<br/><small>Text-to-SQL</small>"]
-        RS["Redshift Serverless<br/><small>genbi_mart</small>"]
-        QS["QuickSight<br/><small>5 dashboards</small>"]
+    subgraph CF_Layer["Content Delivery"]
+        CF{{"Amazon<br/>CloudFront"}}
+    end
+
+    subgraph Static["Static Hosting"]
+        S3W[("Amazon S3<br/>index.html, chat.js")]
+    end
+
+    subgraph API["API Layer"]
+        APIGW["Amazon<br/>API Gateway"]
+        LAMBDA1{{"AWS Lambda<br/>genbi-chat"}}
+        LAMBDA2{{"AWS Lambda<br/>genbi-quicksight"}}
+    end
+
+    subgraph AI_Services["AI Services"]
+        KB["Amazon Bedrock<br/>Knowledge Bases"]
+        LLM["Amazon Bedrock<br/>LLM"]
+    end
+
+    subgraph Data["Data Layer"]
+        RS[("Amazon Redshift<br/>Serverless")]
+        QS["Amazon<br/>QuickSight"]
     end
 
     USER -->|HTTPS| CF
     CF --> S3W
-    CF -->|/api/*| APIGW
+    CF -->|"/api/*"| APIGW
     APIGW --> LAMBDA1
     APIGW --> LAMBDA2
     LAMBDA1 --> KB
@@ -137,49 +351,47 @@ flowchart LR
 |--------|-----------|
 | **Access** | Public via CloudFront URL |
 | **Compute** | AWS Lambda (serverless, pay-per-request) |
-| **API** | API Gateway REST with Lambda proxy integration |
+| **API** | Amazon API Gateway REST with Lambda proxy integration |
 | **Auth** | None (open access) |
 | **Network** | Public endpoints for all services |
-| **Cost** | Near-zero when idle (Redshift Serverless scales to zero) |
+| **Cost** | Near-zero when idle (Redshift Serverless + Lambda scale to zero) |
 
-This version can be deployed to CloudFront for quick public access with minimal infrastructure.
+### Enterprise Deployment — VPC + Dual-Path Access (Recommended for Production)
 
-### Enterprise Version (Recommended for Production)
-
-For production deployments, the architecture adds **network isolation**, **authentication**, **dual-path access** (external + internal), and **operational monitoring**. No data, dashboards, or chatbot responses are accessible to unauthorized users.
+For production deployments, the architecture adds **network isolation**, **authentication**, **dual-path access** (external + internal via Direct Connect / VPN), and **operational monitoring**. No data, dashboards, or chatbot responses are accessible to unauthorized users.
 
 ```mermaid
 flowchart TB
-    subgraph External["External Access Path"]
-        EXT_USER["External User<br/><small>Partners / Demos</small>"]
-        WAF["AWS WAF<br/><small>Rate limit, geo-block,<br/>SQL injection protection</small>"]
-        CF_E["CloudFront<br/><small>genbi.company.com</small>"]
+    subgraph External["External Access Path<br/>(Partners / Demo Audiences)"]
+        EXT_USER["External User"]
+        WAF{{"AWS WAF<br/><small>Rate limit, geo-block</small>"}}
+        CF_E{{"Amazon<br/>CloudFront"}}
         COG["Amazon Cognito<br/><small>SAML / OIDC SSO</small>"]
-        PUB_ALB["Public ALB<br/><small>HTTPS only</small>"]
+        PUB_ALB["Elastic Load<br/>Balancing<br/><small>Public ALB</small>"]
     end
 
-    subgraph Internal["Internal Access Path"]
-        INT_USER["Internal User<br/><small>Staff / Analysts</small>"]
-        CORP["Corporate Network<br/><small>Office / VPN Client</small>"]
-        DX["AWS Direct Connect<br/>OR Site-to-Site VPN<br/>OR Client VPN"]
-        TGW["Transit Gateway"]
-        PRIV_ALB["Private ALB<br/><small>genbi.internal.company.com<br/>(Route 53 Private Hosted Zone)</small>"]
+    subgraph Internal["Internal Access Path<br/>(Staff / Analysts)"]
+        INT_USER["Internal User"]
+        CORP["Corporate<br/>Network"]
+        DX["AWS Direct Connect<br/>OR AWS Site-to-Site VPN<br/>OR AWS Client VPN"]
+        TGW["AWS Transit<br/>Gateway"]
+        PRIV_ALB["Elastic Load<br/>Balancing<br/><small>Private ALB</small>"]
     end
 
-    subgraph VPC["Customer VPC (Private Subnets)"]
-        EC2["EC2 / ECS Fargate<br/><small>GenBI Flask API<br/>Multi-AZ Auto Scaling</small>"]
-        VPCE_BR["Bedrock<br/>VPC Endpoint"]
-        VPCE_RS["Redshift<br/>VPC Endpoint"]
-        KB_E["Bedrock KB<br/><small>RAG</small>"]
-        LLM_E["Bedrock LLM<br/><small>Text-to-SQL</small>"]
-        RS_E["Redshift Serverless<br/><small>genbi_mart</small>"]
-        QS_E["QuickSight<br/><small>Row-Level Security</small>"]
+    subgraph VPC["Customer VPC — Private Subnets"]
+        EC2{{"Amazon EC2<br/>OR AWS Fargate<br/><small>GenBI API | Multi-AZ</small>"}}
+        VPCE_BR["VPC Endpoint<br/><small>Bedrock</small>"]
+        VPCE_RS["VPC Endpoint<br/><small>Redshift</small>"]
+        KB_E["Amazon Bedrock<br/>Knowledge Bases"]
+        LLM_E["Amazon Bedrock<br/>LLM"]
+        RS_E[("Amazon Redshift<br/>Serverless")]
+        QS_E["Amazon QuickSight<br/><small>Row-Level Security</small>"]
     end
 
     subgraph Ops["Operational Layer"]
-        CW["CloudWatch<br/><small>Metrics, Alarms</small>"]
-        XR["X-Ray<br/><small>End-to-end Tracing</small>"]
-        CT["CloudTrail<br/><small>Audit Logs</small>"]
+        CW["Amazon<br/>CloudWatch"]
+        XR["AWS<br/>X-Ray"]
+        CT["AWS<br/>CloudTrail"]
     end
 
     EXT_USER --> WAF --> CF_E --> COG --> PUB_ALB
@@ -203,130 +415,36 @@ flowchart TB
 | Aspect | External Path | Internal Path |
 |--------|--------------|---------------|
 | **Who** | Partners, executives, demo audiences | Internal analysts, operations staff |
-| **Entry** | Internet → CloudFront + WAF | Corporate network → DX / VPN |
-| **DNS** | `genbi.company.com` (public) | `genbi.internal.company.com` (Route 53 Private Hosted Zone) |
+| **Entry** | Internet → Amazon CloudFront + AWS WAF | Corporate network → AWS Direct Connect / VPN |
+| **DNS** | `genbi.company.com` (public Route 53) | `genbi.internal.company.com` (Route 53 Private Hosted Zone) |
 | **Load Balancer** | Public ALB (internet-facing) | Private ALB (internal only, no public IP) |
-| **Auth** | Cognito with SAML/OIDC (corporate SSO) | Corporate AD / Kerberos (already authenticated on network) |
-| **Protection** | WAF rate-limiting, geo-blocking, SQL injection rules | Security Groups + NACLs (trusted network) |
+| **Auth** | Amazon Cognito with SAML/OIDC (corporate SSO) | Corporate AD / Kerberos (already authenticated on network) |
+| **Protection** | AWS WAF rate-limiting, geo-blocking, OWASP rules | Security Groups + NACLs (trusted network) |
 
-Both paths route to the **same EC2/ECS compute layer** — no duplication of application infrastructure.
+Both paths route to the **same EC2/Fargate compute layer** — no duplication of application infrastructure.
 
 #### Internal Connectivity Options
 
-| Option | Best For | Latency | Setup |
-|--------|----------|---------|-------|
-| **AWS Direct Connect (DX)** | HQ / regional offices with high traffic | Lowest (dedicated fiber) | Weeks (physical cross-connect) |
-| **Site-to-Site VPN** | Branch offices, DX backup | Low (encrypted over internet) | Hours (IPsec config) |
+| Option | Best For | Latency | Setup Time |
+|--------|----------|---------|------------|
+| **AWS Direct Connect** | HQ / regional offices with high traffic | Lowest (dedicated fiber) | Weeks (physical cross-connect) |
+| **AWS Site-to-Site VPN** | Branch offices, DX backup | Low (encrypted over internet) | Hours (IPsec config) |
 | **AWS Client VPN** | Remote workers / WFH analysts | Medium (per-user OpenVPN) | Minutes (certificate-based) |
 
-All three terminate at a Transit Gateway (or Virtual Private Gateway) attached to the customer VPC.
+All three terminate at an AWS Transit Gateway (or Virtual Private Gateway) attached to the customer VPC.
 
 #### Enterprise Security Controls
 
-| Control | Purpose |
-|---------|---------|
-| **VPC Endpoints** | Bedrock and Redshift traffic never leaves AWS backbone — no internet exposure |
-| **KMS Encryption** | At-rest encryption for Redshift, S3, Bedrock KB, and CloudWatch Logs |
-| **TLS Everywhere** | All in-transit data encrypted (ALB → EC2, VPC endpoints, DX with MACsec) |
-| **QuickSight RLS** | Row-Level Security — each user sees only their authorized region/store data |
-| **WAF Rules** | Rate limiting (prevent abuse), geo-blocking, OWASP managed rule sets |
-| **CloudTrail** | Full API audit log — who queried what, when |
-| **X-Ray Tracing** | End-to-end request tracing: KB retrieval → LLM → Redshift → response |
-
----
-
-## Getting Started
-
-### Prerequisites
-
-Before deploying, ensure the following are in place:
-
-| Requirement | Details |
-|-------------|---------|
-| **AWS Account** | With permissions for Redshift, Glue, Bedrock, S3, Lambda, CloudFront |
-| **Amazon QuickSight** | Enterprise edition with embedding enabled (required for dashboard embedding) |
-| **Amazon Bedrock** | Model access enabled for your chosen LLM (e.g., Anthropic Claude, Amazon Titan) |
-| **Python 3.9+** | For data generation scripts and local development |
-| **AWS CLI v2** | Configured with appropriate credentials |
-| **Raw Data** | Must be generated locally first — see Step 1 below |
-
-### Step 1: Generate Raw Data
-
-> The `genbi/raw/` directory is excluded from this repository (~2.4 GB). You must generate the raw data locally before proceeding.
-
-```bash
-git clone https://github.com/danielpeggy/bi-report-chatbot.git
-cd bi-report-chatbot
-
-# Generate POS transaction data
-python3 generate_data.py
-
-# Generate all domain data
-cd genbi
-python3 generate_pos.py              # POS transactions (monthly partitions)
-python3 generate_operations.py       # Inventory, labor, service times, equipment
-python3 generate_market_financial.py  # Competitor pricing, store P&L
-python3 generate_customer.py          # Customer profiles, feedback, loyalty
-python3 generate_reference.py         # Stores, menu items, channels, payments, promotions
-```
-
-All data is synthetically generated with seed 42 (fully reproducible). Patterns include seasonal variation, geographic differences, temporal peaks, supply chain volatility, and realistic equipment failure rates.
-
-### Step 2: Upload Raw Data to S3
-
-```bash
-# Create your S3 bucket (or use existing)
-aws s3 mb s3://YOUR-BUCKET-NAME
-
-# Upload generated data
-aws s3 sync genbi/raw/ s3://YOUR-BUCKET-NAME/ --exclude "*.DS_Store"
-```
-
-### Step 3: Set Up Amazon Redshift Serverless
-
-1. Create a serverless workgroup (e.g., `demo-sales-related`)
-2. Create database `dev` with schema `genbi_mart`
-3. Run the SQL scripts from [`sql/`](sql/) to create tables and load dimension data
-
-### Step 4: Run AWS Glue ETL Jobs
-
-Upload the PySpark scripts from [`genbi/etl/`](genbi/etl/) as Glue jobs:
-
-1. **load_dimensions** ([`load_dimensions.py`](genbi/etl/load_dimensions.py)) — Loads 7 dimension tables from S3 → Redshift
-2. **load_facts** ([`load_facts.py`](genbi/etl/load_facts.py)) — Loads 8 fact tables with JOINs, calculated fields, type casting
-3. **load_metadata** ([`load_metadata.py`](genbi/etl/load_metadata.py)) — Loads ETL registry, column-level lineage, and data dictionary
-
-### Step 5: Set Up Amazon Bedrock Knowledge Base
-
-1. Create a Bedrock Knowledge Base pointing to the 6 markdown files in [`genbi/kb_docs/`](genbi/kb_docs/)
-2. Upload the KB docs to your S3 bucket: `aws s3 sync genbi/kb_docs/ s3://YOUR-BUCKET-NAME/kb_docs/`
-3. Configure the KB with Amazon OpenSearch Serverless as the vector store
-4. Run a sync/ingestion job to index the documents
-
-### Step 6: Set Up Amazon QuickSight
-
-1. Create 5 dashboards in QuickSight (Executive Summary, Sales & Menu, Operations, Customer Intelligence, Financial Performance)
-2. Connect each dashboard to the appropriate Redshift datasets
-3. Configure embedding: generate an embed URL for registered users
-4. Note the dashboard IDs for the API configuration
-
-### Step 7: Deploy the Application
-
-**Local Development:**
-```bash
-pip install flask flask-cors boto3
-cd genbi
-python3 api.py
-# Open http://localhost:5001
-```
-
-**Production (AWS):**
-1. Package `agent.py` + dependencies as a Lambda function
-2. Create a Lambda Function URL for the API
-3. Upload static files (`embed/index.html`, etc.) to S3
-4. Configure CloudFront with S3 origin (static files) + Lambda Function URL origin (`/api/*`)
-
-See [`documentation.html`](documentation.html) for detailed step-by-step production deployment instructions.
+| AWS Service / Control | Purpose |
+|----------------------|---------|
+| **VPC Endpoints** | Bedrock and Redshift traffic stays on AWS backbone — no internet exposure |
+| **AWS KMS** | At-rest encryption for Redshift, S3, Bedrock KB, and CloudWatch Logs |
+| **TLS Everywhere** | In-transit encryption: ALB → EC2, VPC endpoints, DX with MACsec |
+| **QuickSight Row-Level Security** | Each user sees only their authorized region/store data |
+| **AWS WAF** | Rate limiting, geo-blocking, OWASP managed rule sets |
+| **AWS CloudTrail** | Full API audit log — who queried what, when |
+| **AWS X-Ray** | End-to-end request tracing: KB retrieval → LLM → Redshift → response |
+| **Amazon CloudWatch** | Metrics, alarms, dashboards for API latency and error rates |
 
 ---
 
