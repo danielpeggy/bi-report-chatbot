@@ -1,5 +1,5 @@
 ==============================================================================
-McDonald's HK GenBI - Market & Financial Data Generation - COMPLETE
+ABC Restaurant Group GenBI - Market & Financial Data Generation - COMPLETE
 ==============================================================================
 
 SCRIPT CREATED:
@@ -51,7 +51,7 @@ FINANCIAL DATA (raw/financial/):
 CONFIGURATION:
   - Random seed: 42 (reproducible results)
   - Time period: 2023 (full year, Jan 1 - Dec 31)
-  - Stores: 200 McDonald's locations
+  - Stores: 200 ABC Restaurant locations
   - Menu items: 30 tracked items
   - Currency: Hong Kong Dollars (HKD)
 

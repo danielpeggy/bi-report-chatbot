@@ -1,4 +1,4 @@
-# McDonald's HK GenBI Data Mart - Schema Overview
+# ABC Restaurant Group GenBI Data Mart - Schema Overview
 
 ## Database: Amazon Redshift Serverless
 - Workgroup: demo-sales-related
@@ -16,7 +16,7 @@ Columns: date_key, full_date, year, quarter, month, month_name, week_of_year, da
 Note: is_holiday flags 17 Hong Kong public holidays including Lunar New Year (Jan 23-25), Easter (Apr 7-10), HKSAR Day (Jul 1), National Day (Oct 2), Christmas (Dec 25-26).
 
 #### dim_store (200 rows)
-All McDonald's HK locations across three regions.
+All ABC Restaurant Group locations across three regions.
 Columns: store_key, store_id (S001-S200), store_name, district, region (HK_Island, Kowloon, New_Territories), store_type (mall, street, drive_thru), avg_daily_orders, open_date, rent_monthly.
 Note: Only drive_thru stores have drive-through channel orders.
 

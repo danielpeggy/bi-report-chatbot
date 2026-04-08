@@ -6,33 +6,33 @@
 
 -- Q1: Revenue by Category
 SELECT c.category_name, SUM(oi.line_total) AS revenue
-FROM mcdhk.order_items oi
-JOIN mcdhk.menu_items m ON oi.item_id = m.item_id
-JOIN mcdhk.categories c ON m.category_id = c.category_id
+FROM abc_restaurant.order_items oi
+JOIN abc_restaurant.menu_items m ON oi.item_id = m.item_id
+JOIN abc_restaurant.categories c ON m.category_id = c.category_id
 GROUP BY 1 ORDER BY 2 DESC;
 
 -- Q2: Revenue by Category Over Months
 SELECT TO_CHAR(o.order_date,'Mon') AS month, c.category_name, SUM(oi.line_total) AS revenue
-FROM mcdhk.order_items oi
-JOIN mcdhk.orders o ON oi.order_id = o.order_id
-JOIN mcdhk.menu_items m ON oi.item_id = m.item_id
-JOIN mcdhk.categories c ON m.category_id = c.category_id
+FROM abc_restaurant.order_items oi
+JOIN abc_restaurant.orders o ON oi.order_id = o.order_id
+JOIN abc_restaurant.menu_items m ON oi.item_id = m.item_id
+JOIN abc_restaurant.categories c ON m.category_id = c.category_id
 GROUP BY 1, 2 ORDER BY MIN(o.order_date), 1;
 
 -- Q3: Top 5 Dishes by Revenue
 SELECT m.item_name, SUM(oi.line_total) AS revenue
-FROM mcdhk.order_items oi
-JOIN mcdhk.menu_items m ON oi.item_id = m.item_id
+FROM abc_restaurant.order_items oi
+JOIN abc_restaurant.menu_items m ON oi.item_id = m.item_id
 GROUP BY 1 ORDER BY 2 DESC LIMIT 5;
 
 -- Q4: Order Distribution by Hours
 SELECT o.order_hour, COUNT(DISTINCT o.order_id) AS order_count
-FROM mcdhk.orders o GROUP BY 1 ORDER BY 1;
+FROM abc_restaurant.orders o GROUP BY 1 ORDER BY 1;
 
 -- Q5: Revenue by Days of Week
 SELECT o.order_day_of_week, SUM(oi.line_total) AS revenue
-FROM mcdhk.order_items oi
-JOIN mcdhk.orders o ON oi.order_id = o.order_id
+FROM abc_restaurant.order_items oi
+JOIN abc_restaurant.orders o ON oi.order_id = o.order_id
 GROUP BY 1 ORDER BY CASE o.order_day_of_week
   WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
   WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6
@@ -45,7 +45,7 @@ SELECT CASE
   WHEN o.order_hour BETWEEN 18 AND 21 THEN 'Dinner'
   ELSE 'Late Night' END AS period,
   COUNT(DISTINCT o.order_id) AS cnt
-FROM mcdhk.orders o GROUP BY 1;
+FROM abc_restaurant.orders o GROUP BY 1;
 
 -- Q7: KPIs
 SELECT
@@ -54,5 +54,5 @@ SELECT
   SUM(oi.line_total) AS total_revenue,
   ROUND(COUNT(*)::decimal / COUNT(DISTINCT o.order_id), 2) AS avg_items_per_order,
   ROUND(SUM(oi.line_total) / COUNT(DISTINCT o.order_id), 2) AS avg_sales_per_order
-FROM mcdhk.order_items oi
-JOIN mcdhk.orders o ON oi.order_id = o.order_id;
+FROM abc_restaurant.order_items oi
+JOIN abc_restaurant.orders o ON oi.order_id = o.order_id;

@@ -1,5 +1,5 @@
 """
-POS Transaction Data Generator for McDonald's HK GenBI Project
+POS Transaction Data Generator for ABC Restaurant Group GenBI Project
 
 Generates synthetic POS transaction and line item data for all stores across 2023.
 Data is partitioned by month (12 files each for transactions and line items).

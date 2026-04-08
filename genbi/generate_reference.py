@@ -1,5 +1,5 @@
 """
-McDonald's HK GenBI Project - Reference Data Generator
+ABC Restaurant Group GenBI Project - Reference Data Generator
 Generates CSV files for dimension/reference tables
 """
 
@@ -137,7 +137,7 @@ def main():
     """Generate all reference CSV files."""
     ensure_output_dir()
     
-    print("Generating McDonald's HK GenBI reference data...")
+    print("Generating ABC Restaurant Group GenBI reference data...")
     print(f"Output directory: {OUTPUT_DIR}\n")
     
     generate_stores_csv()

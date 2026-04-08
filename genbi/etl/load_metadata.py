@@ -69,7 +69,7 @@ try:
             "job_name": "load_dim_store",
             "source": "raw_reference_stores",
             "target": "genbi_mart.dim_store",
-            "description": "Loads 200 McDonald's HK store locations with district, region, and type classification",
+            "description": "Loads 200 ABC Restaurant HK store locations with district, region, and type classification",
             "job_type": "dimension",
             "created_at": datetime.now(),
             "status": "active"
@@ -246,7 +246,7 @@ try:
             "source_tables": "pos_transactions",
             "source_columns": "store_id",
             "transformation": "Direct pass-through",
-            "business_logic": "Identifies which McDonald's location this sale occurred at"
+            "business_logic": "Identifies which ABC Restaurant location this sale occurred at"
         },
         {
             "target_table": "fact_sales",
@@ -798,7 +798,7 @@ try:
             "table_name": "fact_sales",
             "column_name": "store_id",
             "data_type": "VARCHAR(10)",
-            "definition": "Unique identifier for the McDonald's store location where this sale occurred.",
+            "definition": "Unique identifier for the ABC Restaurant store location where this sale occurred.",
             "business_unit": "Operations",
             "pii": False
         },
@@ -1268,7 +1268,7 @@ try:
             "table_name": "dim_customer",
             "column_name": "acquisition_channel",
             "data_type": "VARCHAR(50)",
-            "definition": "How customer first engaged with McDonald's: Mobile App, In-Store, Third-Party Delivery, or Other. Used to analyze channel effectiveness.",
+            "definition": "How customer first engaged with ABC Restaurant: Mobile App, In-Store, Third-Party Delivery, or Other. Used to analyze channel effectiveness.",
             "business_unit": "Marketing",
             "pii": False
         },

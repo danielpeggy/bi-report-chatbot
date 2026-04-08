@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-McDonald's HK GenBI - Market and Financial Data Generation
+ABC Restaurant Group GenBI - Market and Financial Data Generation
 Generates synthetic market indicators, competitor pricing, and financial data
-for 200 McDonald's stores across Hong Kong for 2023.
+for 200 ABC Restaurant stores across Hong Kong for 2023.
 """
 
 import csv
@@ -156,7 +156,7 @@ def generate_competitor_pricing():
                     "competitor_name": comp_name,
                     "item_equivalent": item["item_name"],
                     "competitor_price_hkd": round(comp_price, 2),
-                    "mcdonalds_price_hkd": mcd_price,
+                    "abc_price_hkd": mcd_price,
                     "price_difference": round(price_diff, 2),
                     "price_index": round(price_index, 3),
                 })
@@ -165,7 +165,7 @@ def generate_competitor_pricing():
     with open(output_file, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=[
             "snapshot_date", "competitor_name", "item_equivalent",
-            "competitor_price_hkd", "mcdonalds_price_hkd", "price_difference", "price_index"
+            "competitor_price_hkd", "abc_price_hkd", "price_difference", "price_index"
         ])
         writer.writeheader()
         writer.writerows(rows)
@@ -443,7 +443,7 @@ def generate_opex_breakdown():
 def main():
     """Main execution function."""
     print("=" * 70)
-    print("McDonald's HK GenBI - Market & Financial Data Generation")
+    print("ABC Restaurant Group GenBI - Market & Financial Data Generation")
     print("=" * 70)
 
     ensure_directories()

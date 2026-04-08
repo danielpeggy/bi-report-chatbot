@@ -1,4 +1,4 @@
-# Business Glossary - McDonald's HK GenBI
+# Business Glossary - ABC Restaurant Group GenBI
 
 ## Key Business Metrics
 
@@ -14,7 +14,7 @@
 
 **EBITDA**: Earnings Before Interest, Tax, Depreciation & Amortization. The primary store-level operating profitability metric.
 
-**Net Margin**: Net profit after all expenses / Revenue × 100. Target: 10-15% for healthy McDonald's stores.
+**Net Margin**: Net profit after all expenses / Revenue × 100. Target: 10-15% for healthy ABC Restaurant stores.
 
 **Same-Store Sales (SSS)**: Revenue comparison for the same store year-over-year. Since this dataset covers only 2023, compare month-over-month or quarter-over-quarter.
 

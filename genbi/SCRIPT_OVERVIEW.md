@@ -1,10 +1,10 @@
-# McDonald's HK GenBI - Market & Financial Data Generation Script
+# ABC Restaurant Group GenBI - Market & Financial Data Generation Script
 
 ## File Location
 `/Users/danshek/mcdhk-dashboard/genbi/generate_market_financial.py`
 
 ## Overview
-Complete Python script that generates 5 synthetic CSV files containing market and financial data for McDonald's Hong Kong operations:
+Complete Python script that generates 5 synthetic CSV files containing market and financial data for ABC Restaurant Group operations:
 - 200 stores across 18 districts
 - 30 menu items
 - 12 months of 2023
@@ -38,7 +38,7 @@ Complete Python script that generates 5 synthetic CSV files containing market an
 ## Configuration Constants
 
 ### Competitors (5)
-- KFC: 18 items, 8% cheaper than McDonald's
+- KFC: 18 items, 8% cheaper than ABC Restaurant
 - Burger King: 20 items, 5% premium
 - MOS Burger: 15 items, 8% premium
 - Jollibee: 16 items, 12% cheaper
@@ -185,7 +185,7 @@ python3 generate_market_financial.py
 Output:
 ```
 ======================================================================
-McDonald's HK GenBI - Market & Financial Data Generation
+ABC Restaurant Group GenBI - Market & Financial Data Generation
 ======================================================================
 Output directories ready: ...
 Generating competitor pricing data...

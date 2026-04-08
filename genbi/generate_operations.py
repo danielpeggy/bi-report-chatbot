@@ -1,5 +1,5 @@
 """
-McDonald's HK GenBI - Synthetic Operations Data Generator
+ABC Restaurant Group GenBI - Synthetic Operations Data Generator
 
 Generates 4 CSV files with operational data:
 1. inventory_daily.csv - Daily inventory tracking (2.19M rows)
@@ -30,7 +30,7 @@ end_date = datetime.strptime(DATE_END, "%Y-%m-%d")
 OUTPUT_DIR = "/Users/danshek/mcdhk-dashboard/genbi/raw/operations"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-print("McDonald's HK GenBI - Operations Data Generator")
+print("ABC Restaurant Group GenBI - Operations Data Generator")
 print(f"Generating data from {DATE_START} to {DATE_END}")
 print(f"Stores: {len(STORES)} | Menu Items: {len(MENU_ITEMS)}")
 print()

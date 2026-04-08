@@ -1,5 +1,5 @@
 """
-McDonald's HK GenBI - Customer Data Generator
+ABC Restaurant Group GenBI - Customer Data Generator
 Generates synthetic customer profiles, loyalty transactions, and feedback surveys
 Run with: python3 generate_customer.py
 """
@@ -53,7 +53,7 @@ FEEDBACK_TEMPLATES = [
     "Order was wrong, missing fries",
     "Clean restaurant, nice atmosphere",
     "Portions are getting smaller",
-    "Best McDonald's in HK",
+    "Best ABC Restaurant in HK",
     "Service was slow today",
     "Food was hot and fresh",
     "Prices are too high",
@@ -366,7 +366,7 @@ def write_csv(filename, fieldnames, rows):
 
 def main():
     print("=" * 70)
-    print("McDonald's HK GenBI - Customer Data Generator")
+    print("ABC Restaurant Group GenBI - Customer Data Generator")
     print("=" * 70)
     print()
 

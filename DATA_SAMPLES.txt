@@ -1,5 +1,5 @@
 ==============================================================================
-McDonald's HK GenBI - Generated Data Samples & Specification
+ABC Restaurant Group GenBI - Generated Data Samples & Specification
 ==============================================================================
 
 1. COMPETITOR PRICING DATA
@@ -13,9 +13,9 @@ McDonald's HK GenBI - Generated Data Samples & Specification
    - competitor_name: KFC, Burger King, MOS Burger, Jollibee, Shake Shack
    - item_equivalent: Menu item being compared (from config MENU_ITEMS)
    - competitor_price_hkd: Price charged by competitor
-   - mcdonalds_price_hkd: McDonald's price for same/similar item
+   - abc_price_hkd: ABC Restaurant price for same/similar item
    - price_difference: Raw difference in HKD
-   - price_index: Ratio (McDonald's price / competitor price)
+   - price_index: Ratio (ABC Restaurant price / competitor price)
    
    Business Logic:
    - KFC typically 8% cheaper (price_multiplier: 0.92)
@@ -157,7 +157,7 @@ REALISM FACTORS:
   3. Supply chain volatility (±5% variance, typhoon impacts)
   4. Budget variance (±10% realistic)
   5. Store type differences (mall stores higher labor costs due to rent)
-  6. Competitor dynamics (realistic pricing relative to McDonald's)
+  6. Competitor dynamics (realistic pricing relative to ABC Restaurant)
 
 GEOGRAPHIC COVERAGE:
   - 18 HK districts with accurate population/economics

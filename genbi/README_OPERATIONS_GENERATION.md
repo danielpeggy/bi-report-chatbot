@@ -1,8 +1,8 @@
-# McDonald's HK GenBI - Operations Data Generation
+# ABC Restaurant Group GenBI - Operations Data Generation
 
 ## Overview
 
-This directory contains Python scripts for generating synthetic operational data for the McDonald's HK GenBI (General Business Intelligence) dashboard project. The system generates realistic, interconnected operational datasets covering inventory, labor, service metrics, and equipment maintenance across 200 Hong Kong stores.
+This directory contains Python scripts for generating synthetic operational data for the ABC Restaurant Group GenBI (General Business Intelligence) dashboard project. The system generates realistic, interconnected operational datasets covering inventory, labor, service metrics, and equipment maintenance across 200 Hong Kong stores.
 
 ## Files
 

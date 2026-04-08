@@ -1,5 +1,5 @@
 ================================================================================
-McDonald's HK GenBI - Operations Data Generation COMPLETE
+ABC Restaurant Group GenBI - Operations Data Generation COMPLETE
 ================================================================================
 
 Generated: 2026-03-30

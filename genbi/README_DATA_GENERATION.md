@@ -1,7 +1,7 @@
-# McDonald's HK GenBI - Data Generation Script
+# ABC Restaurant Group GenBI - Data Generation Script
 
 ## Overview
-`generate_market_financial.py` generates synthetic market and financial data for McDonald's Hong Kong (200 stores) for 2023.
+`generate_market_financial.py` generates synthetic market and financial data for ABC Restaurant Group (200 stores) for 2023.
 
 ## Output Files
 
@@ -10,7 +10,7 @@
 1. **competitor_pricing.csv** (~600 rows)
    - Snapshot dates: 1st of each month (12 months)
    - Competitors: KFC, Burger King, MOS Burger, Jollibee, Shake Shack
-   - Pricing comparisons with McDonald's prices
+   - Pricing comparisons with ABC Restaurant prices
    - ~20 comparable items per competitor
    - Pricing variance: ±15% (KFC cheaper on chicken, Shake Shack 30-50% premium)
 
@@ -54,7 +54,7 @@ python3 generate_market_financial.py
 - Random seed: 42 (reproducible)
 - Base year: 2023
 - Currency: Hong Kong Dollars (HKD)
-- Stores: 200 McDonald's locations
+- Stores: 200 ABC Restaurant locations
 - Menu items: 30 items tracked
 - Time periods: 12 months
 - Realistic distributions and seasonal patterns

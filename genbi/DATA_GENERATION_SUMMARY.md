@@ -1,4 +1,4 @@
-# McDonald's HK GenBI - Operations Data Generation Summary
+# ABC Restaurant Group GenBI - Operations Data Generation Summary
 
 ## Generated Files
 
